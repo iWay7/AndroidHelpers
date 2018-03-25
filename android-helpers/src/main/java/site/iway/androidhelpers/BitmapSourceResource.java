@@ -27,7 +27,7 @@ public class BitmapSourceResource extends BitmapSource {
     public boolean equals(Object o) {
         if (o instanceof BitmapSourceResource) {
             BitmapSourceResource other = (BitmapSourceResource) o;
-            return filter == other.filter && resourceId == other.resourceId;
+            return resourceId == other.resourceId && compareFilters(filter, other.filter);
         }
         return false;
     }

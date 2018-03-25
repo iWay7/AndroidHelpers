@@ -27,7 +27,7 @@ public class BitmapSourceFile extends BitmapSource {
     public boolean equals(Object o) {
         if (o instanceof BitmapSourceFile) {
             BitmapSourceFile other = (BitmapSourceFile) o;
-            return filter == other.filter && compareValidString(filePath, other.filePath);
+            return compareValidString(filePath, other.filePath) && compareFilters(filter, other.filter);
         }
         return false;
     }

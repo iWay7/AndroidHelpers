@@ -27,7 +27,7 @@ public class BitmapSourceAsset extends BitmapSource {
     public boolean equals(Object o) {
         if (o instanceof BitmapSourceAsset) {
             BitmapSourceAsset other = (BitmapSourceAsset) o;
-            return filter == other.filter && compareValidString(assetPath, other.assetPath);
+            return compareValidString(assetPath, other.assetPath) && compareFilters(filter, other.filter);
         }
         return false;
     }

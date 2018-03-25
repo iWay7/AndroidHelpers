@@ -26,7 +26,7 @@ public class BitmapView extends View implements BitmapInfoListener {
         if (mCachedBitmapFilters == null) {
             mCachedBitmapFilters = new HashMap<>();
         }
-        String key = "s=" + s.ordinal() + ",w=" + w + ",h=" + h + ",r=" + r;
+        String key = s.ordinal() + "," + w + "," + h + "," + r;
         BitmapFilter value = mCachedBitmapFilters.get(key);
         if (value == null) {
             value = new BitmapFilterClip(s, w, h, r);

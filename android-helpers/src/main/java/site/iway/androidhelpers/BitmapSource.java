@@ -21,6 +21,36 @@ public abstract class BitmapSource {
         return true;
     }
 
+    protected boolean compareFilters(BitmapFilter a, BitmapFilter b) {
+        if (a == null) {
+            if (b == null) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            if (b == null) {
+                return false;
+            } else {
+                String aName = a.toString();
+                String bName = b.toString();
+                if (aName == null) {
+                    if (bName == null) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    if (bName == null) {
+                        return false;
+                    } else {
+                        return compareValidString(aName, bName);
+                    }
+                }
+            }
+        }
+    }
+
     public abstract boolean isValid();
 
     @Override

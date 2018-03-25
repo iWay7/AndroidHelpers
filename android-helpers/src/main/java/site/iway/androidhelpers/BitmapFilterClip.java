@@ -23,4 +23,8 @@ public class BitmapFilterClip implements BitmapFilter {
         return BitmapHelper.clip(bitmap, scale, width, height, radius);
     }
 
+    @Override
+    public String toString() {
+        return "Clip," + scale.ordinal() + "," + width + "," + height + "," + radius;
+    }
 }

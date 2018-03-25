@@ -27,7 +27,7 @@ public class BitmapSourceURL extends BitmapSource {
     public boolean equals(Object o) {
         if (o instanceof BitmapSourceURL) {
             BitmapSourceURL other = (BitmapSourceURL) o;
-            return filter == other.filter && compareValidString(urlPath, other.urlPath);
+            return compareValidString(urlPath, other.urlPath) && compareFilters(filter, other.filter);
         }
         return false;
     }
