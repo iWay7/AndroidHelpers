@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="BitmapView">
+        <attr name="backDrawable" format="reference|color" />
+        <attr name="emptyDrawable" format="reference|color" />
+        <attr name="errorDrawable" format="reference|color" />
+        <attr name="foreDrawable" format="reference|color" />
+        <attr name="scaleType">
+            <enum name="none" value="0" />
+            <enum name="center" value="1" />
+            <enum name="centerFit" value="2" />
+            <enum name="centerCrop" value="3" />
+            <enum name="centerInside" value="4" />
+        </attr>
+        <attr name="useDefaultFilter" format="boolean" />
+        <attr name="roundCornerRadius" format="dimension" />
+        <attr name="finishAnimation" format="reference" />
+    </declare-styleable>
+
+    <declare-styleable name="MovieView">
+        <attr name="scaleType" />
+        <attr name="repeated" format="boolean" />
+        <attr name="refreshTimeSpan" format="integer" />
+    </declare-styleable>
+
+    <declare-styleable name="CameraPreview">
+        <attr name="focusByTouch" format="boolean" />
+        <attr name="cameraRotate">
+            <enum name="auto" value="-1" />
+            <enum name="rotate_000" value="0" />
+            <enum name="rotate_090" value="90" />
+            <enum name="rotate_180" value="180" />
+            <enum name="rotate_270" value="270" />
+        </attr>
+        <attr name="detectQRCode" format="boolean" />
+        <attr name="cameraId" format="integer" />
+    </declare-styleable>
+
+    <declare-styleable name="CircleProgressBar">
+        <attr name="progressBackColor" format="color" />
+        <attr name="progressFrontColor" format="color" />
+        <attr name="progressWidth" format="dimension" />
+        <attr name="circleDiameter" format="dimension" />
+        <attr name="startAngleOffset" format="float" />
+        <attr name="progress" format="float" />
+    </declare-styleable>
+
+    <attr name="typeFaceAssetPath" format="string" />
+    <attr name="touchDownAnimation" format="reference" />
+    <attr name="touchUpAnimation" format="reference" />
+    <attr name="drawablePressAlpha" format="integer" />
+    <attr name="textPressAlpha" format="integer" />
+    <attr name="lineDrawable" format="reference|color" />
+    <attr name="lineDrawableHeight" format="dimension" />
+    <attr name="lineDrawableOffset" format="dimension" />
+    <attr name="filterClickSpan" format="integer" />
+
+    <declare-styleable name="ExtendedEditText">
+        <attr name="typeFaceAssetPath" />
+        <attr name="lineDrawable" />
+        <attr name="lineDrawableHeight" />
+        <attr name="lineDrawableOffset" />
+    </declare-styleable>
+
+    <declare-styleable name="ExtendedImageView">
+        <attr name="touchDownAnimation" />
+        <attr name="touchUpAnimation" />
+        <attr name="drawablePressAlpha" />
+        <attr name="filterClickSpan" />
+    </declare-styleable>
+
+    <attr name="enableTouchSelect" format="boolean" />
+    <attr name="multipleSelectMode" format="boolean" />
+    <attr name="containSplitter" format="boolean" />
+
+    <declare-styleable name="ExtendedFrameLayout">
+        <attr name="enableTouchSelect" />
+        <attr name="multipleSelectMode" />
+    </declare-styleable>
+
+    <declare-styleable name="ExtendedLinearLayout">
+        <attr name="enableTouchSelect" />
+        <attr name="multipleSelectMode" />
+        <attr name="containSplitter" />
+    </declare-styleable>
+
+    <declare-styleable name="ExtendedRelativeLayout">
+        <attr name="enableTouchSelect" />
+        <attr name="multipleSelectMode" />
+    </declare-styleable>
+
+    <declare-styleable name="ExtendedScrollView">
+        <attr name="flingable" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="ExtendedTextView">
+        <attr name="typeFaceAssetPath" />
+        <attr name="touchDownAnimation" />
+        <attr name="touchUpAnimation" />
+        <attr name="lineDrawable" />
+        <attr name="lineDrawableHeight" />
+        <attr name="lineDrawableOffset" />
+        <attr name="drawRoundRect" format="boolean" />
+        <attr name="roundRectColor" format="color" />
+        <attr name="roundRectRadius" format="dimension" />
+        <attr name="drawRoundRectIncludePadding" format="boolean" />
+        <attr name="drawablePressAlpha" />
+        <attr name="textPressAlpha" />
+        <attr name="filterClickSpan" />
+    </declare-styleable>
+
+    <declare-styleable name="ExtendedViewPager">
+        <attr name="userTouchable" format="boolean" />
+        <attr name="autoSwitchTime" format="integer" />
+        <attr name="customizeScrollDuration" format="integer" />
+    </declare-styleable>
+
+    <declare-styleable name="FlowLayout">
+        <attr name="enableTouchSelect" />
+        <attr name="multipleSelectMode" />
+        <attr name="lineAlignment">
+            <enum name="topTop" value="0" />
+            <enum name="topCenter" value="1" />
+            <enum name="topBottom" value="2" />
+            <enum name="centerTop" value="3" />
+            <enum name="centerCenter" value="4" />
+            <enum name="centerBottom" value="5" />
+            <enum name="bottomTop" value="6" />
+            <enum name="bottomCenter" value="7" />
+            <enum name="bottomBottom" value="8" />
+        </attr>
+        <attr name="horizontalSpacing" format="dimension" />
+        <attr name="verticalSpacing" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="LoadingView">
+        <attr name="loadingDrawable" format="reference" />
+        <attr name="rotateFrameSpan" format="integer" />
+        <attr name="rotateFrameTime" format="integer" />
+    </declare-styleable>
+
+    <declare-styleable name="PageIndicator">
+        <attr name="pageCount" format="integer" />
+        <attr name="resUnselected" format="reference" />
+        <attr name="resSelected" format="reference" />
+        <attr name="pageIndex" format="integer" />
+        <attr name="indicatorSpacing" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="PullRefreshLayout">
+        <attr name="headerViewId" format="reference" />
+        <attr name="contentViewId" format="reference" />
+    </declare-styleable>
+
+    <declare-styleable name="RatingBar">
+        <attr name="count" format="integer" />
+        <attr name="resUnchecked" format="reference" />
+        <attr name="resChecked" format="reference" />
+        <attr name="point" format="integer" />
+        <attr name="pointByTouch" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="SelectorLayout">
+        <attr name="containSplitter" />
+        <attr name="selectionMode">
+            <enum name="single" value="0" />
+            <enum name="multiple" value="1" />
+        </attr>
+    </declare-styleable>
+
+    <declare-styleable name="SlideIndicator">
+        <attr name="indicatorDrawable" format="reference|color" />
+        <attr name="interpolator" format="reference" />
+    </declare-styleable>
+
+    <declare-styleable name="TabLayout">
+        <attr name="containSplitter" />
+        <attr name="invokeSelectOnTouchDown" format="boolean" />
+        <attr name="invokeSelectOnTouchMove" format="boolean" />
+        <attr name="invokeSelectOnTouchUp" format="boolean" />
+        <attr name="invokeSelectOnTouchUpRange" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="ScratchCard">
+        <attr name="scratchDrawable" format="reference|color" />
+        <attr name="scratchWidth" format="dimension" />
+    </declare-styleable>
+
+    <attr name="normalDrawable" format="reference" />
+    <attr name="selectedDrawable" format="reference" />
+    <attr name="rowCount" format="integer" />
+    <attr name="colCount" format="integer" />
+
+    <declare-styleable name="GestureLock">
+        <attr name="normalDrawable" />
+        <attr name="selectedDrawable" />
+        <attr name="errorDrawable" />
+        <attr name="routeColorSelected" format="color" />
+        <attr name="routeColorError" format="color" />
+        <attr name="routeWidth" format="dimension" />
+        <attr name="routeShrink" format="dimension" />
+        <attr name="touchDetectRadius" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="GestureLockIndicator">
+        <attr name="normalDrawable" />
+        <attr name="selectedDrawable" />
+    </declare-styleable>
+
+    <declare-styleable name="ViewSwapper">
+        <attr name="displayedChild" format="integer" />
+        <attr name="inAnimation" format="reference" />
+        <attr name="outAnimation" format="reference" />
+    </declare-styleable>
+
+    <declare-styleable name="DrawerLayout">
+        <attr name="leftViewId" format="reference" />
+        <attr name="rightViewId" format="reference" />
+        <attr name="centerViewId" format="reference" />
+    </declare-styleable>
+
+</resources>

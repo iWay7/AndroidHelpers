@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/AndroidHelpers.iml" filepath="$PROJECT_DIR$/AndroidHelpers.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android-helpers/android-helpers.iml" filepath="$PROJECT_DIR$/android-helpers/android-helpers.iml" />
+      <module fileurl="file://D:\Desktop\a\AndroidHelpers\android-helpers\lib.iml" filepath="D:\Desktop\a\AndroidHelpers\android-helpers\lib.iml" />
+    </modules>
+  </component>
+</project>

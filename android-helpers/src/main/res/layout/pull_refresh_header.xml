@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <site.iway.helpers.ExtendedImageView
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:scaleType="center"
+        android:src="@drawable/pull_refresh_photo"/>
+
+    <site.iway.helpers.ExtendedLinearLayout
+        android:id="@+id/mainView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:gravity="center"
+        android:paddingBottom="14dp"
+        android:paddingTop="14dp">
+
+        <site.iway.helpers.ExtendedImageView
+            android:id="@+id/imageView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:scaleType="fitCenter"
+            android:src="@drawable/pull_refresh_indicator"/>
+
+        <site.iway.helpers.ExtendedTextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:text="@string/pull_to_refresh"
+            android:textColor="#969696"
+            android:textSize="14sp"/>
+
+    </site.iway.helpers.ExtendedLinearLayout>
+
+</merge>
