@@ -129,11 +129,11 @@ public class BitmapCache {
     }
 
     public static BitmapInfo get(BitmapSource source, BitmapInfoListener listener) {
-        if (mInitialized == false) {
+        if (!mInitialized) {
             BitmapCacheLogger.logError("BitmapCache has not initialized, ignored.");
             return null;
         }
-        if (source == null || source.isValid() == false) {
+        if (source == null || !source.isValid()) {
             BitmapCacheLogger.logError("Invalid get request, source is empty or invalid, ignored.");
             return null;
         }
@@ -143,8 +143,7 @@ public class BitmapCache {
         }
         BitmapInfo bitmapInfo = BitmapInfoManager.get(source);
         if (bitmapInfo == null) {
-            bitmapInfo = new BitmapInfo();
-            bitmapInfo.source = source;
+            bitmapInfo = new BitmapInfo(source);
             bitmapInfo.addListener(listener);
             BitmapInfoManager.add(bitmapInfo);
             BitmapCacheLogger.logVerbose("Added get request, hashCode is " + bitmapInfo.hashCode() + ".");

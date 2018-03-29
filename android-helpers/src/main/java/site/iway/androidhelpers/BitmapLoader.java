@@ -38,7 +38,6 @@ abstract class BitmapLoader extends Thread {
     protected abstract void releaseResources(boolean errorOccurred);
 
     private BitmapInfo mWorkingItem;
-    private Bitmap mWorkingBitmap;
 
     public void run() {
         while (true) {
@@ -138,20 +137,21 @@ abstract class BitmapLoader extends Thread {
                 Options options = getDecodeOptions();
                 BitmapInfoManager.optimize(getTargetDataSize());
                 mWorkingItem.updateProgress(BitmapInfo.GETTING_DATA);
-                mWorkingBitmap = BitmapFactory.decodeStream(inputStreamWrapper, outPadding, options);
-                if (mWorkingBitmap == null) {
+                Bitmap bitmap = BitmapFactory.decodeStream(inputStreamWrapper, outPadding, options);
+                if (bitmap == null) {
                     throw new RuntimeException("Decode failed.");
                 }
                 mWorkingItem.updateProgress(BitmapInfo.DATA_FINISH);
-                if (mWorkingItem.source.filter != null) {
+                BitmapSource source = mWorkingItem.getSource();
+                if (source.filter != null) {
                     mWorkingItem.updateProgress(BitmapInfo.FILTERING);
-                    mWorkingBitmap = mWorkingItem.source.filter.filter(mWorkingBitmap);
-                    if (mWorkingBitmap == null) {
+                    BitmapFilter filter = source.filter;
+                    bitmap = filter.filter(bitmap);
+                    if (bitmap == null) {
                         throw new RuntimeException("Filter failed.");
                     }
                 }
-
-                mWorkingItem.bitmap = mWorkingBitmap;
+                mWorkingItem.setBitmap(bitmap);
                 mWorkingItem.updateProgress(BitmapInfo.GET_BITMAP);
                 BitmapInfoManager.optimize();
 
@@ -159,7 +159,7 @@ abstract class BitmapLoader extends Thread {
 
                 releaseResources(false);
             } catch (Exception e) {
-                mWorkingItem.bitmap = null;
+                mWorkingItem.setBitmap(null);
                 mWorkingItem.updateProgress(BitmapInfo.GET_ERROR);
                 BitmapInfoManager.optimize();
 
@@ -169,7 +169,6 @@ abstract class BitmapLoader extends Thread {
                 releaseResources(true);
             } finally {
                 mWorkingItem = null;
-                mWorkingBitmap = null;
             }
         }
     }

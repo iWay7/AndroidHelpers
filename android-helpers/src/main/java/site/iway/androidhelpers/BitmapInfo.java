@@ -17,101 +17,118 @@ public class BitmapInfo {
     public static final int GET_BITMAP = 102;
     public static final int GET_ERROR = 103;
 
-    BitmapSource source = null;
-    long priority = 0;
-    Bitmap bitmap = null;
-    Lock lock = new ReentrantLock();
-    int progress = READY_TO_START;
+    private final BitmapSource mSource;
+    private List<BitmapInfoListener> mListeners;
+    private long mGetTime;
+    private int mProgress;
+    private Bitmap mBitmap;
+    private Lock mBitmapLock;
 
-    private final List<BitmapInfoListener> mListeners = new LinkedList<>();
-    private final Object mListenersLock = new Object();
+    public BitmapInfo(BitmapSource bitmapSource) {
+        mSource = bitmapSource;
+        mListeners = new LinkedList<>();
+        mGetTime = 0;
+        mProgress = READY_TO_START;
+        mBitmapLock = new ReentrantLock();
+    }
 
     void addListener(BitmapInfoListener listener) {
-        synchronized (mListenersLock) {
+        synchronized (this) {
             boolean existed = mListeners.contains(listener);
             if (!existed) {
-                mListeners.add(listener);
-            }
-        }
-    }
-
-    void removeListener(BitmapInfoListener listener) {
-        synchronized (mListenersLock) {
-            mListeners.remove(listener);
-        }
-    }
-
-    void clearListeners() {
-        synchronized (mListenersLock) {
-            mListeners.clear();
-        }
-    }
-
-    List<BitmapInfoListener> copyListeners() {
-        List<BitmapInfoListener> listenersCopy = new LinkedList<>();
-        synchronized (mListenersLock) {
-            listenersCopy.addAll(mListeners);
-        }
-        return listenersCopy;
-    }
-
-    void updateProgress(int newProgress) {
-        if (progress != newProgress) {
-            progress = newProgress;
-            List<BitmapInfoListener> listeners = copyListeners();
-            for (BitmapInfoListener listener : listeners) {
-                try {
+                if (mProgress == GET_BITMAP || mProgress == GET_ERROR) {
                     listener.onBitmapInfoChange(this);
-                } catch (Exception e) {
-                    BitmapCacheLogger.logError("BitmapInfo " + hashCode() + " has error occurred while notifying progress.");
-                    BitmapCacheLogger.logError(e);
+                } else {
+                    mListeners.add(listener);
                 }
             }
         }
     }
 
-    int getRAMUsage() {
-        if (bitmap == null || bitmap.isRecycled())
-            return 0;
-        return bitmap.getRowBytes() * bitmap.getHeight();
+    void removeListener(BitmapInfoListener listener) {
+        synchronized (this) {
+            mListeners.remove(listener);
+        }
     }
 
-    void releaseRAM() {
-        if (bitmap == null || bitmap.isRecycled())
-            return;
-        bitmap.recycle();
+    long getGetTime() {
+        synchronized (this) {
+            return mGetTime;
+        }
     }
 
-    public void lock() {
-        lock.lock();
+    void updateGetTime() {
+        synchronized (this) {
+            mGetTime = System.nanoTime();
+        }
     }
 
-    public void unlock() {
-        lock.unlock();
+    void updateProgress(int newProgress) {
+        synchronized (this) {
+            if (mProgress != newProgress) {
+                mProgress = newProgress;
+                for (BitmapInfoListener listener : mListeners) {
+                    try {
+                        listener.onBitmapInfoChange(this);
+                    } catch (Exception e) {
+                        BitmapCacheLogger.logError("BitmapInfo " + hashCode() + " has error occurred while notifying mProgress.");
+                        BitmapCacheLogger.logError(e);
+                    }
+                }
+            }
+            if (mProgress == GET_BITMAP || mProgress == GET_ERROR) {
+                mListeners.clear();
+            }
+        }
     }
 
     public BitmapSource getSource() {
-        return source;
+        synchronized (this) {
+            return mSource;
+        }
     }
 
     public int getProgress() {
-        return progress;
+        synchronized (this) {
+            return mProgress;
+        }
     }
 
     public int getDataProgress() {
-        if (progress < 0)
-            return 0;
-        if (progress > 100)
-            return 100;
-        return progress;
+        synchronized (this) {
+            if (mProgress < 0)
+                return 0;
+            if (mProgress > 100)
+                return 100;
+            return mProgress;
+        }
     }
 
-    public boolean isFinished() {
-        return progress == GET_BITMAP || progress == GET_ERROR;
+    public void lockBitmap() {
+        mBitmapLock.lock();
+    }
+
+    public void unlockBitmap() {
+        mBitmapLock.unlock();
+    }
+
+    public void setBitmap(Bitmap bitmap) {
+        mBitmap = bitmap;
     }
 
     public Bitmap getBitmap() {
-        return progress == GET_BITMAP ? bitmap : null;
+        return mBitmap;
     }
 
+    int getRAMUsage() {
+        if (mBitmap == null || mBitmap.isRecycled())
+            return 0;
+        return mBitmap.getRowBytes() * mBitmap.getHeight();
+    }
+
+    void releaseRAM() {
+        if (mBitmap == null || mBitmap.isRecycled())
+            return;
+        mBitmap.recycle();
+    }
 }

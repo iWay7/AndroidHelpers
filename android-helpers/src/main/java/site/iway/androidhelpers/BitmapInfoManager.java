@@ -19,7 +19,7 @@ class BitmapInfoManager {
                 System.arraycopy(mArray, 0, newArray, 0, mArray.length);
                 mArray = newArray;
             }
-            bitmapInfo.priority = System.nanoTime();
+            bitmapInfo.updateGetTime();
             mArray[mArraySize] = bitmapInfo;
             mArraySize = targetSize;
             mShouldCheckLoad = true;
@@ -32,8 +32,8 @@ class BitmapInfoManager {
     static BitmapInfo get(BitmapSource bitmapSource) {
         synchronized (mSynchronizer) {
             for (int i = 0; i < mArraySize; i++) {
-                if (mArray[i].source.equals(bitmapSource)) {
-                    mArray[i].priority = System.nanoTime();
+                if (mArray[i].getSource().equals(bitmapSource)) {
+                    mArray[i].updateGetTime();
                     return mArray[i];
                 }
             }
@@ -47,7 +47,8 @@ class BitmapInfoManager {
                 Arrays.sort(mArray, 0, mArraySize, mPriorityComparator);
                 for (int i = 0; i < mArraySize; i++) {
                     BitmapInfo item = mArray[i];
-                    if (item.progress == BitmapInfo.READY_TO_START) {
+                    int progress = item.getProgress();
+                    if (progress == BitmapInfo.READY_TO_START) {
                         if (setPreparing) {
                             item.updateProgress(BitmapInfo.PREPARING);
                         }
@@ -73,13 +74,17 @@ class BitmapInfoManager {
     static Comparator<BitmapInfo> mPriorityComparator = new Comparator<BitmapInfo>() {
         @Override
         public int compare(BitmapInfo lhs, BitmapInfo rhs) {
-            if (lhs.progress == BitmapInfo.GET_ERROR && rhs.progress != BitmapInfo.GET_ERROR)
+            int lProgress = lhs.getProgress();
+            int rProgress = rhs.getProgress();
+            if (lProgress == BitmapInfo.GET_ERROR && rProgress != BitmapInfo.GET_ERROR)
                 return 1;
-            if (lhs.progress != BitmapInfo.GET_ERROR && rhs.progress == BitmapInfo.GET_ERROR)
+            if (lProgress != BitmapInfo.GET_ERROR && rProgress == BitmapInfo.GET_ERROR)
                 return -1;
-            if (lhs.priority < rhs.priority)
+            long lGetTime = lhs.getGetTime();
+            long rGetTime = rhs.getGetTime();
+            if (lGetTime < rGetTime)
                 return 1;
-            if (lhs.priority > rhs.priority)
+            if (lGetTime > rGetTime)
                 return -1;
             return 0;
         }
@@ -90,14 +95,14 @@ class BitmapInfoManager {
             Arrays.sort(mArray, 0, mArraySize, mPriorityComparator);
             int ramUsageSum = ramToIncrease;
             for (int i = 0; i < mArraySize; i++) {
-                boolean isError = mArray[i].progress == BitmapInfo.GET_ERROR;
+                int progress = mArray[i].getProgress();
                 int itemRAMUsage = mArray[i].getRAMUsage();
-                if (isError || ramUsageSum + itemRAMUsage > BitmapCache.MAX_RAM_USAGE) {
+                if (progress == BitmapInfo.GET_ERROR || ramUsageSum + itemRAMUsage > BitmapCache.MAX_RAM_USAGE) {
                     int targetSize = i;
                     do {
-                        mArray[i].lock();
+                        mArray[i].lockBitmap();
                         mArray[i].releaseRAM();
-                        mArray[i].unlock();
+                        mArray[i].unlockBitmap();
                         mArray[i] = null;
                         i++;
                     } while (i < mArraySize);

@@ -236,16 +236,19 @@ public class BitmapView extends View implements BitmapInfoListener {
 
     @Override
     public void onBitmapInfoChange(BitmapInfo bitmapInfo) {
-        if (mHasAttachedToWindow && mBitmapInfo == bitmapInfo && mBitmapInfo.isFinished()) {
-            if (mFinishAnimation != null) {
-                post(new Runnable() {
-                    @Override
-                    public void run() {
-                        startAnimation(mFinishAnimation);
-                    }
-                });
+        if (mHasAttachedToWindow && mBitmapInfo == bitmapInfo) {
+            int progress = bitmapInfo.getProgress();
+            if (progress == BitmapInfo.GET_BITMAP || progress == BitmapInfo.GET_ERROR) {
+                if (mFinishAnimation != null) {
+                    post(new Runnable() {
+                        @Override
+                        public void run() {
+                            startAnimation(mFinishAnimation);
+                        }
+                    });
+                }
+                postInvalidate();
             }
-            postInvalidate();
         }
     }
 
@@ -293,12 +296,12 @@ public class BitmapView extends View implements BitmapInfoListener {
             if (mBitmapInfo == null) {
                 drawDrawable(canvas, mErrorDrawable);
             } else {
-                switch (mBitmapInfo.progress) {
+                switch (mBitmapInfo.getProgress()) {
                     case BitmapInfo.GET_BITMAP:
-                        mBitmapInfo.lock();
-                        Bitmap bitmap = mBitmapInfo.bitmap;
+                        mBitmapInfo.lockBitmap();
+                        Bitmap bitmap = mBitmapInfo.getBitmap();
                         if (bitmap.isRecycled()) {
-                            mBitmapInfo.unlock();
+                            mBitmapInfo.unlockBitmap();
                             drawDrawable(canvas, mEmptyDrawable);
                             mBitmapInfo = BitmapCache.get(mBitmapSource, this);
                         } else {
@@ -308,7 +311,7 @@ public class BitmapView extends View implements BitmapInfoListener {
                                 mPaint.setFilterBitmap(true);
                             }
                             CanvasHelper.drawBitmap(canvas, mClientRectF, bitmap, null, mScale, mPaint);
-                            mBitmapInfo.unlock();
+                            mBitmapInfo.unlockBitmap();
                         }
                         break;
                     case BitmapInfo.GET_ERROR:
