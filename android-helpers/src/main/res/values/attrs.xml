@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <declare-styleable name="BannerView">
+        <attr name="clickDetectRadius" format="dimension" />
+        <attr name="willPreloadNextPage" format="boolean" />
+        <attr name="autoNextTime" format="integer" />
+    </declare-styleable>
+
     <declare-styleable name="BitmapView">
         <attr name="backDrawable" format="reference|color" />
         <attr name="emptyDrawable" format="reference|color" />
@@ -172,6 +178,8 @@
     <declare-styleable name="SlideIndicator">
         <attr name="indicatorDrawable" format="reference|color" />
         <attr name="interpolator" format="reference" />
+        <attr name="leftPositionOffset" format="float" />
+        <attr name="rightPositionOffset" format="float" />
     </declare-styleable>
 
     <declare-styleable name="TabLayout">

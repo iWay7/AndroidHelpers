@@ -1,12 +1,18 @@
 package site.iway.androidhelpers;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Scroller;
 
+import java.util.LinkedList;
+import java.util.List;
+
+import site.iway.javahelpers.ArrayHelper;
 import site.iway.javahelpers.MathHelper;
 
 public class BannerView extends ViewGroup {
@@ -17,17 +23,17 @@ public class BannerView extends ViewGroup {
 
     public BannerView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        initialize();
+        initialize(context, attrs);
     }
 
     public BannerView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        initialize();
+        initialize(context, attrs);
     }
 
     public BannerView(Context context) {
         super(context);
-        initialize();
+        initialize(context, null);
     }
 
     private BannerIndexChangedListener mListener;
@@ -36,14 +42,52 @@ public class BannerView extends ViewGroup {
         mListener = l;
     }
 
+    private float mClickDetectRadius;
+
+    public float getClickDetectRadius() {
+        return mClickDetectRadius;
+    }
+
+    public void setClickDetectRadius(float clickDetectRadius) {
+        mClickDetectRadius = clickDetectRadius;
+    }
+
+    private List<ViewGroup> mRequestDisallowInterceptTouchEventViewGroups;
+
+    public void addRequestDisallowInterceptTouchEventViewGroup(ViewGroup viewGroup) {
+        mRequestDisallowInterceptTouchEventViewGroups.add(viewGroup);
+    }
+
+    public void removeRequestDisallowInterceptTouchEventViewGroup(ViewGroup viewGroup) {
+        mRequestDisallowInterceptTouchEventViewGroups.remove(viewGroup);
+    }
+
+    public void clearRequestDisallowInterceptTouchEventViewGroups() {
+        mRequestDisallowInterceptTouchEventViewGroups.clear();
+    }
+
+    private boolean mWillPreloadNext;
+
+    public boolean isWillPreloadNext() {
+        return mWillPreloadNext;
+    }
+
+    public void setWillPreloadNext(boolean willPreloadNext) {
+        mWillPreloadNext = willPreloadNext;
+    }
+
     private Scroller mScroller;
 
     private BitmapView mBitmapViewCenter;
     private BitmapView mBitmapViewLeft;
     private BitmapView mBitmapViewRight;
 
-    private void initialize() {
-        Context context = getContext();
+    private void initialize(Context context, AttributeSet attrs) {
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.BannerView);
+        setClickDetectRadius(a.getDimension(R.styleable.BannerView_clickDetectRadius, UnitHelper.dipToPxInt(context, 5)));
+        setWillPreloadNext(a.getBoolean(R.styleable.BannerView_willPreloadNextPage, false));
+        setAutoNextTime(a.getInt(R.styleable.BannerView_autoNextTime, 0));
+        mRequestDisallowInterceptTouchEventViewGroups = new LinkedList<>();
         mScroller = new Scroller(context);
         int width = LayoutParams.MATCH_PARENT;
         int height = LayoutParams.MATCH_PARENT;
@@ -53,6 +97,7 @@ public class BannerView extends ViewGroup {
         addView(mBitmapViewCenter, width, height);
         addView(mBitmapViewLeft, width, height);
         addView(mBitmapViewRight, width, height);
+        a.recycle();
     }
 
     public void initializeBitmapViews(ViewProcessor viewProcessor) {
@@ -68,6 +113,7 @@ public class BannerView extends ViewGroup {
 
     public void setBitmapSources(BitmapSource... bitmapSources) {
         mBitmapSources = bitmapSources;
+        setScrollX(0);
         requestLayout();
     }
 
@@ -97,6 +143,17 @@ public class BannerView extends ViewGroup {
                 index--;
         }
         return index;
+    }
+
+    public int getRealIndex() {
+        if (ArrayHelper.isEmpty(mBitmapSources)) {
+            return -1;
+        } else if (mViewWidth == 0 || mViewHeight == 0) {
+            return 0;
+        } else {
+            int currentIndex = getCurrentIndex();
+            return getBitmapSourceIndex(currentIndex);
+        }
     }
 
     private int mLastIndex;
@@ -134,6 +191,15 @@ public class BannerView extends ViewGroup {
             requestLayout();
             if (mListener != null) {
                 mListener.onBannerIndexChanged(this, mCurrIndex);
+                if (mWillPreloadNext) {
+                    BitmapSource bitmapSource = getBitmapSource(mCurrIndex + 1);
+                    BitmapCache.get(bitmapSource, new BitmapInfoListener() {
+                        @Override
+                        public void onBitmapInfoChange(BitmapInfo bitmapInfo) {
+                            // nothing
+                        }
+                    });
+                }
             }
         }
         mLastIndex = mCurrIndex;
@@ -219,8 +285,45 @@ public class BannerView extends ViewGroup {
     }
 
     private float mTouchDownX;
+    private float mTouchDownY;
+    private float mTouchMoveX;
+    private float mTouchMoveY;
     private float mTouchDownXOffset;
     private float mTouchDownScrollX;
+
+    private boolean isClick() {
+        return MathHelper.distance(mTouchDownX, mTouchDownY, mTouchMoveX, mTouchMoveY) < mClickDetectRadius;
+    }
+
+    @Override
+    public void setOnClickListener(final OnClickListener l) {
+        OnClickListener wrappedOnClickListener = new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isClick()) {
+                    l.onClick(v);
+                }
+            }
+        };
+        super.setOnClickListener(wrappedOnClickListener);
+    }
+
+    @Override
+    public void setOnLongClickListener(final OnLongClickListener l) {
+        OnLongClickListener wrappedOnLongClickListener = new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if (MathHelper.distance(mTouchDownX, mTouchDownY, mTouchMoveX, mTouchMoveY) < mClickDetectRadius) {
+                    if (isClick()) {
+                        return l.onLongClick(v);
+                    }
+                }
+                return false;
+            }
+        };
+        super.setOnLongClickListener(wrappedOnLongClickListener);
+
+    }
 
     private void doScroll(MotionEvent event) {
         float targetScrollX = mTouchDownScrollX - mTouchDownXOffset;
@@ -248,6 +351,14 @@ public class BannerView extends ViewGroup {
             int action = event.getAction();
             switch (action) {
                 case MotionEvent.ACTION_DOWN:
+                    for (ViewGroup viewGroup : mRequestDisallowInterceptTouchEventViewGroups) {
+                        viewGroup.requestDisallowInterceptTouchEvent(true);
+                    }
+
+                    mTouchDownX = event.getX();
+                    mTouchDownY = event.getY();
+                    mTouchDownScrollX = getScrollX();
+
                     mVelocityTracker = VelocityTracker.obtain();
                     mVelocityTracker.addMovement(event);
 
@@ -259,11 +370,11 @@ public class BannerView extends ViewGroup {
                     if (mTimer != null) {
                         mTimer.stop();
                     }
-
-                    mTouchDownX = event.getX();
-                    mTouchDownScrollX = getScrollX();
                     break;
                 case MotionEvent.ACTION_MOVE:
+                    mTouchMoveX = event.getX();
+                    mTouchMoveY = event.getY();
+
                     mVelocityTracker.addMovement(event);
 
                     mTouchDownXOffset = event.getX() - mTouchDownX;
@@ -281,6 +392,10 @@ public class BannerView extends ViewGroup {
                     }
 
                     mVelocityTracker.recycle();
+
+                    for (ViewGroup viewGroup : mRequestDisallowInterceptTouchEventViewGroups) {
+                        viewGroup.requestDisallowInterceptTouchEvent(false);
+                    }
                     break;
             }
         }
@@ -297,6 +412,8 @@ public class BannerView extends ViewGroup {
     }
 
     private int getBitmapSourceIndex(int index) {
+        if (ArrayHelper.isEmpty(mBitmapSources))
+            return -1;
         int bitmapSourceIndex = index % mBitmapSources.length;
         if (bitmapSourceIndex < 0)
             bitmapSourceIndex += mBitmapSources.length;
@@ -304,7 +421,7 @@ public class BannerView extends ViewGroup {
     }
 
     private BitmapSource getBitmapSource(int index) {
-        if (mBitmapSources == null || mBitmapSources.length == 0)
+        if (ArrayHelper.isEmpty(mBitmapSources))
             return null;
         int bitmapSourceIndex = getBitmapSourceIndex(index);
         return mBitmapSources[bitmapSourceIndex];

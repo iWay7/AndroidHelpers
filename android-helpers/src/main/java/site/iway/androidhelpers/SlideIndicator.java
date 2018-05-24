@@ -27,6 +27,9 @@ public class SlideIndicator extends View {
         resolveAttrs(context, null);
     }
 
+    private float mLeftPositionOffset;
+    private float mRightPositionOffset;
+
     private Drawable mIndicatorDrawable;
     private Interpolator mInterpolator;
 
@@ -58,13 +61,17 @@ public class SlideIndicator extends View {
             mInterpolator = new LinearInterpolator();
         else
             mInterpolator = AnimationUtils.loadInterpolator(context, interpolator);
+        mLeftPositionOffset = a.getFloat(R.styleable.SlideIndicator_leftPositionOffset, 0);
+        mRightPositionOffset = a.getFloat(R.styleable.SlideIndicator_rightPositionOffset, 0);
         a.recycle();
     }
 
+    private boolean mIndicatorPositionSet;
     private int mIndicatorLeft = 0;
     private int mIndicatorRight = 0;
 
     public void setIndicatorTo(int left, int right, boolean animated) {
+        mIndicatorPositionSet = true;
         mAnimator.stop();
         if (animated) {
             mAnimationStartTime = System.currentTimeMillis();
@@ -124,8 +131,16 @@ public class SlideIndicator extends View {
     protected void onDraw(Canvas canvas) {
         if (mIndicatorDrawable == null)
             return;
-        mIndicatorDrawable.setBounds(mIndicatorLeft, 0, mIndicatorRight, getHeight());
-        mIndicatorDrawable.draw(canvas);
+        if (mIndicatorPositionSet) {
+            mIndicatorDrawable.setBounds(mIndicatorLeft, 0, mIndicatorRight, getHeight());
+            mIndicatorDrawable.draw(canvas);
+        } else {
+            int width = getWidth();
+            int left = (int) (width * mLeftPositionOffset);
+            int right = (int) (width * mRightPositionOffset);
+            mIndicatorDrawable.setBounds(left, 0, right, getHeight());
+            mIndicatorDrawable.draw(canvas);
+        }
     }
 
     @Override

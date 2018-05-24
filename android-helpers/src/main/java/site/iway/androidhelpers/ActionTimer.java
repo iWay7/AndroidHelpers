@@ -45,6 +45,7 @@ public class ActionTimer {
     private static final Object sSynchronizer = new Object();
 
     private static Context sApplicationContext;
+    private static long sTickSpanMillis;
 
     private static List<Action> sActions = new LinkedList<>();
 
@@ -67,7 +68,7 @@ public class ActionTimer {
                 }
 
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(sTickSpanMillis);
                 } catch (InterruptedException e) {
                     // nothing
                 }
@@ -76,9 +77,14 @@ public class ActionTimer {
 
     };
 
-    public static void initialize(Context context) {
+    public static void initialize(Context context, long tickSpanMillis) {
         sApplicationContext = context;
+        sTickSpanMillis = tickSpanMillis;
         sThread.start();
+    }
+
+    public static void initialize(Context context) {
+        initialize(context, 1000);
     }
 
     public static void addAction(Action action) {
