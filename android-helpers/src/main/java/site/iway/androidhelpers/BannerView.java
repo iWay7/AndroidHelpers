@@ -355,8 +355,8 @@ public class BannerView extends ViewGroup {
                         viewGroup.requestDisallowInterceptTouchEvent(true);
                     }
 
-                    mTouchDownX = event.getX();
-                    mTouchDownY = event.getY();
+                    mTouchDownX = mTouchMoveX = event.getX();
+                    mTouchDownY = mTouchMoveX =  event.getY();
                     mTouchDownScrollX = getScrollX();
 
                     mVelocityTracker = VelocityTracker.obtain();
