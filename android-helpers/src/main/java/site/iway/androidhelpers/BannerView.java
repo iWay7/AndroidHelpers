@@ -313,10 +313,8 @@ public class BannerView extends ViewGroup {
         OnLongClickListener wrappedOnLongClickListener = new OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                if (MathHelper.distance(mTouchDownX, mTouchDownY, mTouchMoveX, mTouchMoveY) < mClickDetectRadius) {
-                    if (isClick()) {
-                        return l.onLongClick(v);
-                    }
+                if (isClick()) {
+                    return l.onLongClick(v);
                 }
                 return false;
             }
@@ -356,7 +354,7 @@ public class BannerView extends ViewGroup {
                     }
 
                     mTouchDownX = mTouchMoveX = event.getX();
-                    mTouchDownY = mTouchMoveX =  event.getY();
+                    mTouchDownY = mTouchMoveY = event.getY();
                     mTouchDownScrollX = getScrollX();
 
                     mVelocityTracker = VelocityTracker.obtain();
