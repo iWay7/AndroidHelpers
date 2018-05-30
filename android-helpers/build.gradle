@@ -20,6 +20,6 @@ dependencies {
     api fileTree(include: ['*.jar'], dir: 'jarLibs')
     compileOnly 'com.android.support:support-v4:27.1.1'
     compileOnly 'com.google.zxing:core:3.2.1'
-    compileOnly 'com.github.iWay7:JavaHelpers:1.0.6'
+    compileOnly 'com.github.iWay7:JavaHelpers:1.0.7'
     compileOnly 'com.google.code.gson:gson:2.8.2'
 }
