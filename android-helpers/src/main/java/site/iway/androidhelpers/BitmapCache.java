@@ -12,9 +12,7 @@ public class BitmapCache {
     static int MAX_RAM_USAGE;
     static int MAX_RAM_USAGE_OF_SINGLE_BITMAP;
     static int LOADER_THREAD_PRIORITY;
-    static int URL_CONNECT_TIMEOUT;
-    static int URL_READ_TIMEOUT;
-    static int URL_RETRY_COUNT;
+    static Class<? extends BitmapURLStreamer> URL_STREAMER_CLASS;
     static String DOWNLOAD_DIRECTORY;
 
     static boolean mInitialized;
@@ -51,19 +49,9 @@ public class BitmapCache {
         LOADER_THREAD_PRIORITY = priority;
     }
 
-    public static void setUrlConnectTimeout(int timeout) {
+    public static void setURLStreamerClass(Class<? extends BitmapURLStreamer> streamerClass) {
         throwIfAlreadyInitialized();
-        URL_CONNECT_TIMEOUT = timeout;
-    }
-
-    public static void setUrlReadTimeout(int timeout) {
-        throwIfAlreadyInitialized();
-        URL_READ_TIMEOUT = timeout;
-    }
-
-    public static void setUrlRetryCount(int count) {
-        throwIfAlreadyInitialized();
-        URL_RETRY_COUNT = count;
+        URL_STREAMER_CLASS = streamerClass;
     }
 
     public static void setDownloadDirectoryByContext(Context context, String directoryName) {
@@ -103,17 +91,9 @@ public class BitmapCache {
             BitmapCacheLogger.logWarn("LoaderThreadPriority is invalid, use Thread.NORM_PRIORITY for default.");
             LOADER_THREAD_PRIORITY = Thread.NORM_PRIORITY;
         }
-        if (URL_CONNECT_TIMEOUT <= 0 || URL_CONNECT_TIMEOUT > 20000) {
-            BitmapCacheLogger.logWarn("UrlConnectTimeout is invalid, use 20000 for default.");
-            URL_CONNECT_TIMEOUT = 20000;
-        }
-        if (URL_READ_TIMEOUT <= 0 || URL_READ_TIMEOUT > 20000) {
-            BitmapCacheLogger.logWarn("UrlReadTimeout is invalid, use 20000 for default.");
-            URL_READ_TIMEOUT = 20000;
-        }
-        if (URL_RETRY_COUNT <= 0 || URL_RETRY_COUNT > 5) {
-            BitmapCacheLogger.logWarn("UrlRetryCount is invalid, use 1 for default.");
-            URL_RETRY_COUNT = 1;
+        if (URL_STREAMER_CLASS == null) {
+            BitmapCacheLogger.logWarn("URL_STREAMER_CLASS is invalid, using default.");
+            URL_STREAMER_CLASS = BitmapURLStreamerDefault.class;
         }
         if (TextUtils.isEmpty(DOWNLOAD_DIRECTORY)) {
             BitmapCacheLogger.logWarn("DownloadDirectory not set or set failed, BitmapLoaderUrl won't work.");

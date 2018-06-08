@@ -10,8 +10,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 import site.iway.javahelpers.SecurityHelper;
 import site.iway.javahelpers.StringHelper;
@@ -24,10 +22,10 @@ class BitmapLoaderImpl extends BitmapLoader {
     private InputStream mInputStream;
     private Options mOptions;
     private int mTargetDataSize;
-    private HttpURLConnection mConnection;
     private File mCacheFile;
     private OutputStream mCacheStream;
     private int mDataLength;
+    private BitmapURLStreamer mURLStreamer;
 
     BitmapLoaderImpl(Context context) {
         mContext = context;
@@ -42,21 +40,10 @@ class BitmapLoaderImpl extends BitmapLoader {
         if (mCacheFile.exists() && mCacheFile.length() > 0) {
             prepareResourcesForFile(cacheFilePath);
         } else {
-            for (int i = 0; i < BitmapCache.URL_RETRY_COUNT; i++) {
-                try {
-                    mConnection = (HttpURLConnection) new URL(urlPath).openConnection();
-                    mConnection.setConnectTimeout(BitmapCache.URL_CONNECT_TIMEOUT);
-                    mConnection.setReadTimeout(BitmapCache.URL_READ_TIMEOUT);
-                    mConnection.connect();
-                    break;
-                } catch (Exception e) {
-                    if (i == BitmapCache.URL_RETRY_COUNT - 1) {
-                        throw e;
-                    }
-                }
-            }
-            mInputStream = mConnection.getInputStream();
-            mDataLength = mConnection.getContentLength();
+            mURLStreamer = BitmapCache.URL_STREAMER_CLASS.newInstance();
+            mURLStreamer.initialize(urlPath);
+            mInputStream = mURLStreamer.getInputStream();
+            mDataLength = mURLStreamer.getDataLength();
             mCacheStream = new FileOutputStream(mCacheFile);
         }
     }
@@ -159,7 +146,9 @@ class BitmapLoaderImpl extends BitmapLoader {
         mFile = null;
         if (mCacheFile != null) {
             if (errorOccurred) {
-                mCacheFile.delete();
+                if (!mCacheFile.delete()) {
+                    mCacheFile.deleteOnExit();
+                }
             }
             mCacheFile = null;
         }
@@ -171,9 +160,9 @@ class BitmapLoaderImpl extends BitmapLoader {
             }
             mInputStream = null;
         }
-        if (mConnection != null) {
-            mConnection.disconnect();
-            mConnection = null;
+        if (mURLStreamer != null) {
+            mURLStreamer.release();
+            mURLStreamer = null;
         }
         mOptions = null;
         mTargetDataSize = 0;
