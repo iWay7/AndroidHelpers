@@ -4,12 +4,11 @@ import android.os.Handler;
 import android.os.Looper;
 
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class RPCEngine {
 
-    private LinkedBlockingQueue<RPCReq> mRPCReqs;
+    private LinkedBlockingQueue<RPCReq> mQueue;
     private RPCReqProcessor[] mProcessors;
     private Handler mHandler;
 
@@ -17,7 +16,7 @@ public class RPCEngine {
         if (processorCount <= 0) {
             throw new RuntimeException("ProcessorCount must be larger than zero.");
         }
-        mRPCReqs = new LinkedBlockingQueue<>();
+        mQueue = new LinkedBlockingQueue<>();
         mProcessors = new RPCReqProcessor[processorCount];
         for (int i = 0; i < processorCount; i++) {
             mProcessors[i] = new RPCReqProcessor();
@@ -27,7 +26,11 @@ public class RPCEngine {
     }
 
     private void addReq(RPCReq req) {
-        mRPCReqs.add(req);
+        if (req.independent) {
+            new RPCReqProcessor(req).start();
+        } else {
+            mQueue.add(req);
+        }
     }
 
     private void postRunnable(Runnable runnable, long beginTime, long minDelayTime) {
@@ -67,53 +70,88 @@ public class RPCEngine {
 
     private class RPCReqProcessor extends Thread {
 
+        private RPCReq mReq;
+
+        public RPCReqProcessor(RPCReq req) {
+            mReq = req;
+        }
+
+        public RPCReqProcessor() {
+            // nothing
+        }
+
+        private void runReq(RPCReq req) {
+            try {
+                req.beginTime = System.currentTimeMillis();
+                if (req.isCanceled)
+                    return;
+                req.onPrepare();
+
+                do {
+                    boolean isRetry = req.willRetry;
+                    req.willRetry = false;
+                    if (req.isCanceled)
+                        return;
+                    HttpURLConnection connection = req.onCreateConnection(isRetry);
+
+                    if (req.willRetry)
+                        continue;
+                    if (req.isCanceled)
+                        return;
+                    req.onConnect(connection);
+
+                    if (req.willRetry)
+                        continue;
+                    if (req.isCanceled)
+                        return;
+                    connection.connect();
+
+                    if (req.willRetry)
+                        continue;
+                    if (req.isCanceled)
+                        return;
+                    req.onConnected(connection);
+                } while (req.willRetry);
+
+                if (req.isCanceled)
+                    return;
+                req.onFinish();
+                if (req.isCanceled)
+                    return;
+                finishOnUIThread(req);
+            } catch (Exception e) {
+                try {
+                    if (req.isCanceled)
+                        return;
+                    req.onError(e);
+                    if (req.isCanceled)
+                        return;
+                    errorOnUIThread(req);
+                } catch (Exception onErrorE) {
+                    // nothing
+                }
+            } finally {
+                try {
+                    req.onFinally();
+                } catch (Exception e) {
+                    // nothing
+                }
+            }
+        }
+
         @Override
         public void run() {
-            while (true) {
-                RPCReq req = null;
-                try {
-                    req = mRPCReqs.take();
-                    req.beginTime = System.currentTimeMillis();
-                    if (req.isCanceled)
-                        continue;
-                    req.onPrepare();
-                    URL url = new URL(req.url);
-                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                    if (req.isCanceled)
-                        continue;
-                    req.onConnect(connection);
-                    connection.connect();
-                    if (req.isCanceled)
-                        continue;
-                    req.onConnected(connection);
-                    if (req.isCanceled)
-                        continue;
-                    req.onFinish();
-                    if (req.isCanceled)
-                        continue;
-                    finishOnUIThread(req);
-                } catch (Exception e) {
+            if (mReq == null) {
+                while (true) {
                     try {
-                        if (req != null) {
-                            if (req.isCanceled)
-                                continue;
-                            req.onError(e);
-                            if (req.isCanceled)
-                                continue;
-                            errorOnUIThread(req);
-                        }
-                    } catch (Exception onErrorE) {
-                        // nothing
-                    }
-                } finally {
-                    try {
-                        if (req != null) {
-                            req.onFinally();
-                        }
-                    } catch (Exception onFinallyE) {
+                        RPCReq req = mQueue.take();
+                        runReq(req);
+                    } catch (Exception e) {
                         // nothing
                     }
                 }
+            } else {
+                runReq(mReq);
             }
         }
 
