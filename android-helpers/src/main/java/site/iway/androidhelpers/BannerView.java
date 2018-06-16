@@ -193,7 +193,9 @@ public class BannerView extends ViewGroup {
                 mListener.onBannerIndexChanged(this, mCurrIndex);
                 if (mWillPreloadNext) {
                     BitmapSource bitmapSource = getBitmapSource(mCurrIndex + 1);
-                    BitmapCache.preRequest(bitmapSource);
+                    if (bitmapSource != null) {
+                        BitmapCache.preRequest(bitmapSource);
+                    }
                 }
             }
         }

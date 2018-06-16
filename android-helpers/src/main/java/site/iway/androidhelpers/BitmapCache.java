@@ -166,10 +166,8 @@ public class BitmapCache {
     };
 
     public static void preRequest(BitmapSource bitmapSource) {
-        if (bitmapSource != null) {
-            BitmapRequest bitmapRequest = new BitmapRequest(bitmapSource, EMPTY_CALLBACK);
-            sQueue.addFirst(bitmapRequest);
-        }
+        BitmapRequest bitmapRequest = new BitmapRequest(bitmapSource, EMPTY_CALLBACK);
+        sQueue.addFirst(bitmapRequest);
     }
 
 }
