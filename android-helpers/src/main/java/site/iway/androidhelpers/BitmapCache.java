@@ -1,22 +1,30 @@
 package site.iway.androidhelpers;
 
 import android.content.Context;
-import android.text.TextUtils;
+import android.graphics.Bitmap;
+import android.util.LruCache;
 
 import java.io.File;
+import java.util.concurrent.LinkedBlockingDeque;
+
+import site.iway.javahelpers.HttpFileDownloader;
 
 public class BitmapCache {
 
     static boolean IS_DEBUG_MODE;
+    static Context CONTEXT;
     static int LOADER_COUNT;
-    static int MAX_RAM_USAGE;
-    static int MAX_RAM_USAGE_OF_SINGLE_BITMAP;
     static int LOADER_THREAD_PRIORITY;
-    static Class<? extends BitmapURLStreamer> URL_STREAMER_CLASS;
-    static String DOWNLOAD_DIRECTORY;
+    static int MAX_RAM_USAGE_OF_SINGLE_BITMAP;
+    static int MAX_RAM_USAGE_OF_ALL_BITMAPS;
+    static Class<? extends HttpFileDownloader> DOWNLOADER_CLASS;
+    static File DOWNLOAD_DIRECTORY;
+
+    private static LruCache<BitmapSource, Bitmap> sLruCache;
+    private static LinkedBlockingDeque<BitmapRequest> sQueue;
+    private static BitmapRequestHandler[] sHandlers;
 
     static boolean mInitialized;
-    static BitmapLoader[] mLoaders;
 
     static void throwIfAlreadyInitialized() {
         if (mInitialized) {
@@ -29,19 +37,13 @@ public class BitmapCache {
         IS_DEBUG_MODE = debugMode;
     }
 
+    public static void setContext(Context context) {
+        CONTEXT = context;
+    }
+
     public static void setLoaderCount(int count) {
         throwIfAlreadyInitialized();
         LOADER_COUNT = count;
-    }
-
-    public static void setMaxRAMUsage(int usage) {
-        throwIfAlreadyInitialized();
-        MAX_RAM_USAGE = usage;
-    }
-
-    public static void setMaxRAMUsageForSingleBitmap(int usage) {
-        throwIfAlreadyInitialized();
-        MAX_RAM_USAGE_OF_SINGLE_BITMAP = usage;
     }
 
     public static void setLoaderThreadPriority(int priority) {
@@ -49,89 +51,125 @@ public class BitmapCache {
         LOADER_THREAD_PRIORITY = priority;
     }
 
-    public static void setURLStreamerClass(Class<? extends BitmapURLStreamer> streamerClass) {
+    public static void setMaxRAMUsageForSingleBitmap(int usage) {
         throwIfAlreadyInitialized();
-        URL_STREAMER_CLASS = streamerClass;
+        MAX_RAM_USAGE_OF_SINGLE_BITMAP = usage;
     }
 
-    public static void setDownloadDirectoryByContext(Context context, String directoryName) {
+    public static void setMaxRamUsageOfAllBitmaps(int maxRamUsageOfAllBitmaps) {
+        MAX_RAM_USAGE_OF_ALL_BITMAPS = maxRamUsageOfAllBitmaps;
+    }
+
+    public static void setDownloaderClass(Class<? extends HttpFileDownloader> downloaderClass) {
+        DOWNLOADER_CLASS = downloaderClass;
+    }
+
+    public static void setDownloadDirectory(File downloadDirectory) {
         throwIfAlreadyInitialized();
-        File rootCacheDir = context.getCacheDir();
-        File imageCacheDir = new File(rootCacheDir, directoryName);
-        if (!imageCacheDir.exists()) {
-            if (imageCacheDir.mkdirs()) {
-                DOWNLOAD_DIRECTORY = imageCacheDir.getPath();
-            } else {
-                BitmapCacheLogger.logWarn("Failed to create download directory, BitmapLoaderUrl won't work.");
-            }
+        if (downloadDirectory.isDirectory() && downloadDirectory.exists()) {
+            DOWNLOAD_DIRECTORY = downloadDirectory;
         } else {
-            DOWNLOAD_DIRECTORY = imageCacheDir.getPath();
-        }
-        if (!TextUtils.isEmpty(DOWNLOAD_DIRECTORY) && !DOWNLOAD_DIRECTORY.endsWith(File.separator)) {
-            DOWNLOAD_DIRECTORY += File.separator;
+            if (downloadDirectory.mkdirs()) {
+                DOWNLOAD_DIRECTORY = downloadDirectory;
+            } else {
+                BitmapCacheLogger.logWarn("Failed to create download directory, downloader won't work.");
+            }
         }
     }
 
-    public static void initialize(Context context) {
-        throwIfAlreadyInitialized();
+    public static void setDownloadDirectory(String directoryName) {
+        File cacheDir = CONTEXT.getCacheDir();
+        File imageCacheDir = new File(cacheDir, directoryName);
+        setDownloadDirectory(imageCacheDir);
+    }
 
+    public static void initialize() {
+        throwIfAlreadyInitialized();
+        if (CONTEXT == null) {
+            BitmapCacheLogger.logError("Context is empty");
+            throw new RuntimeException("Context must be set.");
+        }
         if (LOADER_COUNT <= 0 || LOADER_COUNT > 3) {
             BitmapCacheLogger.logWarn("LoaderCount is invalid, use 2 for default.");
             LOADER_COUNT = 2;
-        }
-        if (MAX_RAM_USAGE <= 0 || MAX_RAM_USAGE > DeviceHelper.getHeapGrowthLimit(context)) {
-            BitmapCacheLogger.logWarn("MaxRAMUsage is invalid, use HeapGrowthLimit / 3 for default.");
-            MAX_RAM_USAGE = DeviceHelper.getHeapGrowthLimit(context) / 3;
-        }
-        if (MAX_RAM_USAGE_OF_SINGLE_BITMAP <= 0 || MAX_RAM_USAGE_OF_SINGLE_BITMAP > 8 * 1024 * 1024) {
-            BitmapCacheLogger.logWarn("MaxRAMUsageOfSingleBitmap is invalid, use 4MB for default.");
-            MAX_RAM_USAGE_OF_SINGLE_BITMAP = 4 * 1024 * 1024;
         }
         if (LOADER_THREAD_PRIORITY < Thread.MIN_PRIORITY || LOADER_THREAD_PRIORITY > Thread.MAX_PRIORITY) {
             BitmapCacheLogger.logWarn("LoaderThreadPriority is invalid, use Thread.NORM_PRIORITY for default.");
             LOADER_THREAD_PRIORITY = Thread.NORM_PRIORITY;
         }
-        if (URL_STREAMER_CLASS == null) {
-            BitmapCacheLogger.logWarn("URL_STREAMER_CLASS is invalid, using default.");
-            URL_STREAMER_CLASS = BitmapURLStreamerDefault.class;
+        if (MAX_RAM_USAGE_OF_SINGLE_BITMAP <= 0 || MAX_RAM_USAGE_OF_SINGLE_BITMAP > 8 * 1024 * 1024) {
+            BitmapCacheLogger.logWarn("MaxRAMUsageOfSingleBitmap is invalid, use 4MB for default.");
+            MAX_RAM_USAGE_OF_SINGLE_BITMAP = 4 * 1024 * 1024;
         }
-        if (TextUtils.isEmpty(DOWNLOAD_DIRECTORY)) {
-            BitmapCacheLogger.logWarn("DownloadDirectory not set or set failed, BitmapLoaderUrl won't work.");
+        if (MAX_RAM_USAGE_OF_ALL_BITMAPS <= 0) {
+            BitmapCacheLogger.logWarn("MaxRamUsageOfAllBitmaps is invalid, use 1/3 of HeapGrowthLimit for default.");
+            MAX_RAM_USAGE_OF_ALL_BITMAPS = DeviceHelper.getHeapGrowthLimit(CONTEXT) / 5;
         }
+        if (DOWNLOADER_CLASS == null) {
+            BitmapCacheLogger.logWarn("DownloaderClass is not set, use HttpFileDownloader for default.");
+            DOWNLOADER_CLASS = HttpFileDownloader.class;
+        }
+        if (DOWNLOAD_DIRECTORY == null) {
+            BitmapCacheLogger.logWarn("DownloadDirectory not set or set failed, use cacheDir/BitmapCache for default.");
+            setDownloadDirectory("BitmapCache");
+        }
+        sLruCache = new LruCache<BitmapSource, Bitmap>(MAX_RAM_USAGE_OF_ALL_BITMAPS) {
+            @Override
+            protected int sizeOf(BitmapSource key, Bitmap value) {
+                int size = 0;
+                if (key != null) {
+                    size += 1024;
+                }
+                if (value != null) {
+                    size += 1024;
+                    if (!value.isRecycled()) {
+                        size += value.getByteCount();
+                    }
+                }
+                return size;
+            }
 
-        mLoaders = new BitmapLoader[LOADER_COUNT];
-        for (int i = 0; i < mLoaders.length; i++) {
-            mLoaders[i] = new BitmapLoaderImpl(context);
-            mLoaders[i].setPriority(LOADER_THREAD_PRIORITY);
-            mLoaders[i].start();
+            @Override
+            protected void entryRemoved(boolean evicted, BitmapSource key, Bitmap oldValue, Bitmap newValue) {
+                if (oldValue != null && !oldValue.isRecycled()) {
+                    oldValue.recycle();
+                }
+            }
+        };
+        sQueue = new LinkedBlockingDeque<>();
+        sHandlers = new BitmapRequestHandler[BitmapCache.LOADER_COUNT];
+        for (int i = 0; i < BitmapCache.LOADER_COUNT; i++) {
+            sHandlers[i] = new BitmapRequestHandler(sQueue);
+            sHandlers[i].setPriority(BitmapCache.LOADER_THREAD_PRIORITY);
+            sHandlers[i].start();
         }
         mInitialized = true;
     }
 
-    public static BitmapInfo get(BitmapSource source, BitmapInfoListener listener) {
-        if (!mInitialized) {
-            BitmapCacheLogger.logError("BitmapCache has not initialized, ignored.");
-            return null;
+    static void put(BitmapSource bitmapSource, Bitmap bitmap) {
+        sLruCache.put(bitmapSource, bitmap);
+    }
+
+    public static Bitmap get(BitmapSource bitmapSource) {
+        return sLruCache.get(bitmapSource);
+    }
+
+    public static void requestNow(BitmapRequest bitmapRequest) {
+        sQueue.addFirst(bitmapRequest);
+    }
+
+    private static final BitmapCallback EMPTY_CALLBACK = new BitmapCallback() {
+        @Override
+        public void onBitmapLoadProgressChange(BitmapRequest request) {
+            // nothing
         }
-        if (source == null || !source.isValid()) {
-            BitmapCacheLogger.logError("Invalid get request, source is empty or invalid, ignored.");
-            return null;
+    };
+
+    public static void preRequest(BitmapSource bitmapSource) {
+        if (bitmapSource != null) {
+            BitmapRequest bitmapRequest = new BitmapRequest(bitmapSource, EMPTY_CALLBACK);
+            sQueue.addFirst(bitmapRequest);
         }
-        if (listener == null) {
-            BitmapCacheLogger.logError("Invalid get request, listener is empty, ignored.");
-            return null;
-        }
-        BitmapInfo bitmapInfo = BitmapInfoManager.get(source);
-        if (bitmapInfo == null) {
-            bitmapInfo = new BitmapInfo(source);
-            bitmapInfo.addListener(listener);
-            BitmapInfoManager.add(bitmapInfo);
-            BitmapCacheLogger.logVerbose("Added get request, hashCode is " + bitmapInfo.hashCode() + ".");
-        } else {
-            bitmapInfo.addListener(listener);
-            BitmapCacheLogger.logVerbose("Existed get request, hashCode is " + bitmapInfo.hashCode() + ".");
-        }
-        return bitmapInfo;
     }
 
 }

@@ -1,59 +1,60 @@
 package site.iway.androidhelpers;
 
-public abstract class BitmapSource {
+public class BitmapSource {
 
-    BitmapFilter filter;
+    public static final int TYPE_ASSET = 3;
+    public static final int TYPE_FILE = 1;
+    public static final int TYPE_RESOURCE = 2;
+    public static final int TYPE_URL = 0;
 
-    BitmapSource(BitmapFilter filter) {
+    final int type;
+    final String content;
+    final BitmapFilter filter;
+    final String id;
+    final int hashCode;
+
+    public BitmapSource(int type, String content, BitmapFilter filter) {
+        if (type < TYPE_URL || type > TYPE_ASSET)
+            throw new RuntimeException("Param type is invalid");
+        if (content == null || content.isEmpty())
+            throw new RuntimeException("Param content is invalid");
+        this.type = type;
+        this.content = content;
         this.filter = filter;
+        if (filter == null)
+            id = type + "|" + content;
+        else
+            id = type + "|" + content + "|" + filter.id();
+        hashCode = id.hashCode();
     }
 
-    protected boolean compareValidString(String a, String b) {
-        if (a == b)
-            return true;
-        int aLen = a.length();
-        int bLen = b.length();
-        if (aLen != bLen)
-            return false;
-        for (int i = aLen - 1; i >= 0; i--)
-            if (a.charAt(i) != b.charAt(i))
-                return false;
-        return true;
+    public int type() {
+        return type;
     }
 
-    protected boolean compareFilters(BitmapFilter a, BitmapFilter b) {
-        if (a == null) {
-            if (b == null) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            if (b == null) {
-                return false;
-            } else {
-                String aName = a.toString();
-                String bName = b.toString();
-                if (aName == null) {
-                    if (bName == null) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                } else {
-                    if (bName == null) {
-                        return false;
-                    } else {
-                        return compareValidString(aName, bName);
-                    }
-                }
-            }
-        }
+    public String content() {
+        return content;
     }
 
-    public abstract boolean isValid();
+    public String id() {
+        return id;
+    }
 
     @Override
-    public abstract boolean equals(Object o);
+    public int hashCode() {
+        return hashCode;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (o instanceof BitmapSource) {
+            BitmapSource other = (BitmapSource) o;
+            return id.equals(other.id);
+        }
+        return false;
+    }
 
 }

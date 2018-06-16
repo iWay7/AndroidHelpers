@@ -28,33 +28,33 @@ public class WTFRecorder {
 
             File rootFilesDir = sContext.getFilesDir();
             File logFilesDir = new File(rootFilesDir, sDirectory);
-            if (!logFilesDir.exists() && !logFilesDir.mkdir()) {
+            if (!logFilesDir.exists() && !logFilesDir.mkdirs()) {
                 Log.e(LOG_TAG, "Record failed : Can not create directory " + sDirectory);
                 return;
             }
 
-            Calendar time = Calendar.getInstance();
-            String timeString = CalendarHelper.format(time, "yyyy-MM-dd HHmmss");
-            String fileName = timeString + ".txt";
+            Calendar now = CalendarHelper.now();
+            String timeString = CalendarHelper.format(now, "yyyyMMddHHmmss");
+            String fileName = timeString + ".log";
+            File file = new File(logFilesDir, fileName);
 
             FileOutputStream fileOutputStream = null;
             try {
-                File file = new File(logFilesDir, fileName);
                 fileOutputStream = new FileOutputStream(file);
                 PrintStream printStream = new PrintStream(fileOutputStream);
                 ex.printStackTrace(printStream);
                 printStream.close();
-                Log.e(LOG_TAG, "Record succeeded : File saved at " + fileName);
+                Log.e(LOG_TAG, "Record succeeded : File saved at " + file);
             } catch (Exception e) {
-                try {
-                    if (fileOutputStream != null) {
-                        fileOutputStream.close();
-                    }
-                } catch (Exception exception) {
-                    // nothing
-                }
-                Log.e(LOG_TAG, "Record failed : Can not write file " + fileName);
+                Log.e(LOG_TAG, "Record failed : Can not write file " + file);
             } finally {
+                if (fileOutputStream != null) {
+                    try {
+                        fileOutputStream.close();
+                    } catch (Exception exception) {
+                        // nothing
+                    }
+                }
                 if (sOldHandler != null) {
                     sOldHandler.uncaughtException(thread, ex);
                 }

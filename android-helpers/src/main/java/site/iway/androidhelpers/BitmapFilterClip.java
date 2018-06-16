@@ -19,12 +19,13 @@ public class BitmapFilterClip implements BitmapFilter {
     }
 
     @Override
+    public String id() {
+        return "Clip," + scale.ordinal() + "," + width + "," + height + "," + radius;
+    }
+
+    @Override
     public Bitmap filter(Bitmap bitmap) {
         return BitmapHelper.clip(bitmap, scale, width, height, radius);
     }
 
-    @Override
-    public String toString() {
-        return "Clip," + scale.ordinal() + "," + width + "," + height + "," + radius;
-    }
 }

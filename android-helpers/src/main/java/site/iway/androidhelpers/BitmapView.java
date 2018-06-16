@@ -18,7 +18,7 @@ import java.util.Map;
 
 import site.iway.javahelpers.Scale;
 
-public class BitmapView extends View implements BitmapInfoListener {
+public class BitmapView extends View implements BitmapCallback {
 
     private static Map<String, BitmapFilter> mCachedBitmapFilters = new HashMap<>();
 
@@ -193,17 +193,28 @@ public class BitmapView extends View implements BitmapInfoListener {
 
     private boolean mHasAttachedToWindow;
     private BitmapSource mBitmapSource;
-    private BitmapInfo mBitmapInfo;
+    private BitmapRequest mBitmapRequest;
+
+    public void loadFromSource(int type, String content, BitmapFilter filter) {
+        try {
+            mBitmapSource = new BitmapSource(type, content, filter);
+        } catch (Exception e) {
+            mBitmapSource = null;
+        }
+        mBitmapRequest = null;
+        clearAnimation();
+        invalidate();
+    }
 
     public void loadFromSource(BitmapSource source) {
         mBitmapSource = source;
-        mBitmapInfo = null;
+        mBitmapRequest = null;
         clearAnimation();
         invalidate();
     }
 
     public void loadFromAssetSource(String asset, BitmapFilter filter) {
-        loadFromSource(new BitmapSourceAsset(asset, filter));
+        loadFromSource(BitmapSource.TYPE_ASSET, asset, filter);
     }
 
     public void loadFromAssetSource(String asset) {
@@ -211,7 +222,7 @@ public class BitmapView extends View implements BitmapInfoListener {
     }
 
     public void loadFromFileSource(String file, BitmapFilter filter) {
-        loadFromSource(new BitmapSourceFile(file, filter));
+        loadFromSource(BitmapSource.TYPE_FILE, file, filter);
     }
 
     public void loadFromFileSource(String file) {
@@ -219,7 +230,7 @@ public class BitmapView extends View implements BitmapInfoListener {
     }
 
     public void loadFromResourceSource(int resourceId, BitmapFilter filter) {
-        loadFromSource(new BitmapSourceResource(resourceId, filter));
+        loadFromSource(BitmapSource.TYPE_RESOURCE, String.valueOf(resourceId), filter);
     }
 
     public void loadFromResourceSource(int resourceId) {
@@ -227,7 +238,7 @@ public class BitmapView extends View implements BitmapInfoListener {
     }
 
     public void loadFromURLSource(String url, BitmapFilter filter) {
-        loadFromSource(new BitmapSourceURL(url, filter));
+        loadFromSource(BitmapSource.TYPE_URL, url, filter);
     }
 
     public void loadFromURLSource(String url) {
@@ -235,10 +246,10 @@ public class BitmapView extends View implements BitmapInfoListener {
     }
 
     @Override
-    public void onBitmapInfoChange(BitmapInfo bitmapInfo) {
-        if (mHasAttachedToWindow && mBitmapInfo == bitmapInfo) {
-            int progress = bitmapInfo.getProgress();
-            if (progress == BitmapInfo.GET_BITMAP || progress == BitmapInfo.GET_ERROR) {
+    public void onBitmapLoadProgressChange(BitmapRequest request) {
+        if (mHasAttachedToWindow && request == mBitmapRequest) {
+            int progress = request.getProgress();
+            if (progress == BitmapRequest.GET_BITMAP || progress == BitmapRequest.GET_ERROR) {
                 if (mFinishAnimation != null) {
                     post(new Runnable() {
                         @Override
@@ -273,6 +284,21 @@ public class BitmapView extends View implements BitmapInfoListener {
         }
     }
 
+    private boolean checkBitmapSource() {
+        if (mUseDefaultFilter) {
+            int w = mClientRect.width();
+            int h = mClientRect.height();
+            BitmapFilter filter = createBitmapFilter(mScale, w, h, mRoundCornerRadius);
+            if (mBitmapSource.filter != filter) {
+                int type = mBitmapSource.type;
+                String content = mBitmapSource.content;
+                mBitmapSource = new BitmapSource(type, content, filter);
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         setClientRect();
@@ -280,47 +306,35 @@ public class BitmapView extends View implements BitmapInfoListener {
         if (mBitmapSource == null) {
             drawDrawable(canvas, mEmptyDrawable);
         } else {
-            boolean bitmapFilterModified = false;
-            if (mUseDefaultFilter) {
-                int w = mClientRect.width();
-                int h = mClientRect.height();
-                BitmapFilter filter = createBitmapFilter(mScale, w, h, mRoundCornerRadius);
-                if (mBitmapSource.filter != filter) {
-                    mBitmapSource.filter = filter;
-                    bitmapFilterModified = true;
-                }
-            }
-            if (mBitmapInfo == null || bitmapFilterModified) {
-                mBitmapInfo = BitmapCache.get(mBitmapSource, this);
-            }
-            if (mBitmapInfo == null) {
-                drawDrawable(canvas, mErrorDrawable);
-            } else {
-                switch (mBitmapInfo.getProgress()) {
-                    case BitmapInfo.GET_BITMAP:
-                        mBitmapInfo.lockBitmap();
-                        Bitmap bitmap = mBitmapInfo.getBitmap();
-                        if (bitmap.isRecycled()) {
-                            mBitmapInfo.unlockBitmap();
+            boolean bitmapSourceChanged = checkBitmapSource();
+            Bitmap cachedBitmap = BitmapCache.get(mBitmapSource);
+            if (cachedBitmap == null) {
+                if (mBitmapRequest == null || bitmapSourceChanged) {
+                    mBitmapRequest = new BitmapRequest(mBitmapSource, this);
+                    BitmapCache.requestNow(mBitmapRequest);
+                    drawDrawable(canvas, mEmptyDrawable);
+                } else {
+                    switch (mBitmapRequest.getProgress()) {
+                        case BitmapRequest.GET_BITMAP:
+                            mBitmapRequest = new BitmapRequest(mBitmapSource, this);
+                            BitmapCache.requestNow(mBitmapRequest);
                             drawDrawable(canvas, mEmptyDrawable);
-                            mBitmapInfo = BitmapCache.get(mBitmapSource, this);
-                        } else {
-                            if (mPaint == null) {
-                                mPaint = new Paint();
-                                mPaint.setAntiAlias(true);
-                                mPaint.setFilterBitmap(true);
-                            }
-                            CanvasHelper.drawBitmap(canvas, mClientRectF, bitmap, null, mScale, mPaint);
-                            mBitmapInfo.unlockBitmap();
-                        }
-                        break;
-                    case BitmapInfo.GET_ERROR:
-                        drawDrawable(canvas, mErrorDrawable);
-                        break;
-                    default:
-                        drawDrawable(canvas, mEmptyDrawable);
-                        break;
+                            break;
+                        case BitmapRequest.GET_ERROR:
+                            drawDrawable(canvas, mErrorDrawable);
+                            break;
+                        default:
+                            drawDrawable(canvas, mEmptyDrawable);
+                            break;
+                    }
                 }
+            } else {
+                if (mPaint == null) {
+                    mPaint = new Paint();
+                    mPaint.setAntiAlias(true);
+                    mPaint.setFilterBitmap(true);
+                }
+                CanvasHelper.drawBitmap(canvas, mClientRectF, cachedBitmap, null, mScale, mPaint);
             }
         }
         drawDrawable(canvas, mForeDrawable);
@@ -330,15 +344,13 @@ public class BitmapView extends View implements BitmapInfoListener {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         mHasAttachedToWindow = true;
-        if (mBitmapInfo != null) {
-            mBitmapInfo.addListener(this);
-        }
     }
 
     @Override
     protected void onDetachedFromWindow() {
-        if (mBitmapInfo != null) {
-            mBitmapInfo.removeListener(this);
+        if (mBitmapRequest != null) {
+            mBitmapRequest.cancel();
+            mBitmapRequest = null;
         }
         mHasAttachedToWindow = false;
         super.onDetachedFromWindow();
