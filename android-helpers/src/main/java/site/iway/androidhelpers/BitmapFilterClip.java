@@ -6,10 +6,10 @@ import site.iway.javahelpers.Scale;
 
 public class BitmapFilterClip implements BitmapFilter {
 
-    Scale scale;
-    int width;
-    int height;
-    float radius;
+    final Scale scale;
+    final int width;
+    final int height;
+    final float radius;
 
     public BitmapFilterClip(Scale scaleType, int width, int height, float radius) {
         this.scale = scaleType;
