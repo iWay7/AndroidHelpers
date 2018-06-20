@@ -31,16 +31,9 @@
     </declare-styleable>
 
     <declare-styleable name="CameraPreview">
-        <attr name="focusByTouch" format="boolean" />
-        <attr name="cameraRotate">
-            <enum name="auto" value="-1" />
-            <enum name="rotate_000" value="0" />
-            <enum name="rotate_090" value="90" />
-            <enum name="rotate_180" value="180" />
-            <enum name="rotate_270" value="270" />
-        </attr>
-        <attr name="detectQRCode" format="boolean" />
         <attr name="cameraId" format="integer" />
+        <attr name="focusByClick" format="boolean" />
+        <attr name="detectQRCode" format="boolean" />
     </declare-styleable>
 
     <declare-styleable name="CircleProgressBar">
