@@ -97,9 +97,13 @@ public class CameraPreview extends FrameLayout implements Callback {
         if (mCameraId != cameraId) {
             mCameraId = cameraId;
             mCameraIdChanged = true;
-            if (mSurfaceRunning) {
-                tryInitializeCamera();
-            }
+            reInitialize();
+        }
+    }
+
+    public void reInitialize() {
+        if (mSurfaceRunning) {
+            tryInitializeCamera();
         }
     }
 
@@ -167,7 +171,7 @@ public class CameraPreview extends FrameLayout implements Callback {
                     previewWidth = suggestedPreviewSize.height;
                     previewHeight = suggestedPreviewSize.width;
                 }
-                float surfaceScale = Scale.Center.getScale(clientWidth, clientHeight, previewWidth, previewHeight);
+                float surfaceScale = Scale.CenterCrop.getScale(clientWidth, clientHeight, previewWidth, previewHeight);
                 int targetWidth = MathHelper.pixel(surfaceScale * previewWidth);
                 int targetHeight = MathHelper.pixel(surfaceScale * previewHeight);
                 float targetLeft = MathHelper.pixel(XAlign.CenterCenter.getX(paddingLeft, clientWidth, targetWidth * 1.0f));
@@ -297,9 +301,7 @@ public class CameraPreview extends FrameLayout implements Callback {
                         post(new Runnable() {
                             @Override
                             public void run() {
-                                if (mSurfaceRunning) {
-                                    tryInitializeCamera();
-                                }
+                                reInitialize();
                             }
                         });
                     }
