@@ -121,6 +121,12 @@ public class BitmapCache {
                         continue;
                     }
                     BitmapSource source = mWorkingRequest.getSource();
+                    if (source.type == BitmapSource.TYPE_INVALID) {
+                        throw new RuntimeException("Type is invalid.");
+                    }
+                    if (source.content == null || source.content.isEmpty()) {
+                        throw new RuntimeException("Content is empty.");
+                    }
                     if (source.type == BitmapSource.TYPE_URL) {
                         if (DOWNLOAD_DIRECTORY == null) {
                             throw new RuntimeException("Download directory not set.");

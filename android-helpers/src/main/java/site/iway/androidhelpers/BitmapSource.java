@@ -2,6 +2,7 @@ package site.iway.androidhelpers;
 
 public class BitmapSource {
 
+    public static final int TYPE_INVALID = -1;
     public static final int TYPE_ASSET = 3;
     public static final int TYPE_FILE = 1;
     public static final int TYPE_RESOURCE = 2;
@@ -15,9 +16,7 @@ public class BitmapSource {
 
     public BitmapSource(int type, String content, BitmapFilter filter) {
         if (type < TYPE_URL || type > TYPE_ASSET)
-            throw new RuntimeException("Param type is invalid");
-        if (content == null || content.isEmpty())
-            throw new RuntimeException("Param content is invalid");
+            type = TYPE_INVALID;
         this.type = type;
         this.content = content;
         this.filter = filter;
@@ -26,6 +25,10 @@ public class BitmapSource {
         else
             id = type + "|" + content + "|" + filter.id();
         hashCode = id.hashCode();
+    }
+
+    public BitmapSource(int type, String content) {
+        this(type, content, null);
     }
 
     public int type() {

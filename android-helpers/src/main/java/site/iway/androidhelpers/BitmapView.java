@@ -195,17 +195,6 @@ public class BitmapView extends View implements BitmapCallback {
     private BitmapSource mBitmapSource;
     private BitmapRequest mBitmapRequest;
 
-    public void loadFromSource(int type, String content, BitmapFilter filter) {
-        try {
-            mBitmapSource = new BitmapSource(type, content, filter);
-        } catch (Exception e) {
-            mBitmapSource = null;
-        }
-        mBitmapRequest = null;
-        clearAnimation();
-        invalidate();
-    }
-
     public void loadFromSource(BitmapSource source) {
         mBitmapSource = source;
         mBitmapRequest = null;
@@ -214,7 +203,7 @@ public class BitmapView extends View implements BitmapCallback {
     }
 
     public void loadFromAssetSource(String asset, BitmapFilter filter) {
-        loadFromSource(BitmapSource.TYPE_ASSET, asset, filter);
+        loadFromSource(new BitmapSource(BitmapSource.TYPE_ASSET, asset, filter));
     }
 
     public void loadFromAssetSource(String asset) {
@@ -222,7 +211,7 @@ public class BitmapView extends View implements BitmapCallback {
     }
 
     public void loadFromFileSource(String file, BitmapFilter filter) {
-        loadFromSource(BitmapSource.TYPE_FILE, file, filter);
+        loadFromSource(new BitmapSource(BitmapSource.TYPE_FILE, file, filter));
     }
 
     public void loadFromFileSource(String file) {
@@ -230,7 +219,7 @@ public class BitmapView extends View implements BitmapCallback {
     }
 
     public void loadFromResourceSource(int resourceId, BitmapFilter filter) {
-        loadFromSource(BitmapSource.TYPE_RESOURCE, String.valueOf(resourceId), filter);
+        loadFromSource(new BitmapSource(BitmapSource.TYPE_RESOURCE, String.valueOf(resourceId), filter));
     }
 
     public void loadFromResourceSource(int resourceId) {
@@ -238,7 +227,7 @@ public class BitmapView extends View implements BitmapCallback {
     }
 
     public void loadFromURLSource(String url, BitmapFilter filter) {
-        loadFromSource(BitmapSource.TYPE_URL, url, filter);
+        loadFromSource(new BitmapSource(BitmapSource.TYPE_URL, url, filter));
     }
 
     public void loadFromURLSource(String url) {
