@@ -203,7 +203,7 @@ public class BitmapView extends View implements BitmapCallback {
     }
 
     public void loadFromAssetSource(String asset, BitmapFilter filter) {
-        loadFromSource(new BitmapSource(BitmapSource.TYPE_ASSET, asset, filter));
+        loadFromSource(new BitmapSourceAsset(asset, filter));
     }
 
     public void loadFromAssetSource(String asset) {
@@ -211,7 +211,7 @@ public class BitmapView extends View implements BitmapCallback {
     }
 
     public void loadFromFileSource(String file, BitmapFilter filter) {
-        loadFromSource(new BitmapSource(BitmapSource.TYPE_FILE, file, filter));
+        loadFromSource(new BitmapSourceFile(file, filter));
     }
 
     public void loadFromFileSource(String file) {
@@ -219,7 +219,7 @@ public class BitmapView extends View implements BitmapCallback {
     }
 
     public void loadFromResourceSource(int resourceId, BitmapFilter filter) {
-        loadFromSource(new BitmapSource(BitmapSource.TYPE_RESOURCE, String.valueOf(resourceId), filter));
+        loadFromSource(new BitmapSourceResource(resourceId, filter));
     }
 
     public void loadFromResourceSource(int resourceId) {
@@ -227,7 +227,7 @@ public class BitmapView extends View implements BitmapCallback {
     }
 
     public void loadFromURLSource(String url, BitmapFilter filter) {
-        loadFromSource(new BitmapSource(BitmapSource.TYPE_URL, url, filter));
+        loadFromSource(new BitmapSourceURL(url, filter));
     }
 
     public void loadFromURLSource(String url) {
