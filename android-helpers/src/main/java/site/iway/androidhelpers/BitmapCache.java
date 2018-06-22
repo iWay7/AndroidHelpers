@@ -257,9 +257,9 @@ public class BitmapCache {
         }
     }
 
-    public static void setDownloadDirectory(String directoryName) {
+    public static void setDownloadDirectory(String downloadDirectoryName) {
         File cacheDir = CONTEXT.getCacheDir();
-        File imageCacheDir = new File(cacheDir, directoryName);
+        File imageCacheDir = new File(cacheDir, downloadDirectoryName);
         setDownloadDirectory(imageCacheDir);
     }
 
@@ -311,6 +311,7 @@ public class BitmapCache {
         for (int i = 0; i < LOADER_COUNT; i++) {
             sLoaders[i] = new BitmapLoader();
             sLoaders[i].setPriority(LOADER_THREAD_PRIORITY);
+            sLoaders[i].setName("BitmapLoader-" + i);
             sLoaders[i].start();
         }
         mInitialized = true;

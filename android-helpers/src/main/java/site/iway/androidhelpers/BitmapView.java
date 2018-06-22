@@ -335,12 +335,22 @@ public class BitmapView extends View implements BitmapCallback {
         mHasAttachedToWindow = true;
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
+    private void cancelBitmapRequestIfExists() {
         if (mBitmapRequest != null) {
             mBitmapRequest.cancel();
             mBitmapRequest = null;
         }
+    }
+
+    @Override
+    public void onStartTemporaryDetach() {
+        cancelBitmapRequestIfExists();
+        super.onStartTemporaryDetach();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        cancelBitmapRequestIfExists();
         mHasAttachedToWindow = false;
         super.onDetachedFromWindow();
     }
