@@ -14,7 +14,7 @@ public class BitmapSource {
     final String id;
     final int hashCode;
 
-    public BitmapSource(int type, String content, BitmapFilter filter) {
+    BitmapSource(int type, String content, BitmapFilter filter) {
         if (type < TYPE_URL || type > TYPE_ASSET)
             type = TYPE_INVALID;
         this.type = type;

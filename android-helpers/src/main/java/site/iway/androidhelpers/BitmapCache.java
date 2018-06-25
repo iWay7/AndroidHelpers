@@ -27,6 +27,7 @@ public class BitmapCache {
 
     private static final String LOG_TAG = "BitmapCache";
 
+    private static boolean LOG_ENABLED;
     private static Context CONTEXT;
     private static int LOADER_COUNT;
     private static int LOADER_THREAD_PRIORITY;
@@ -38,6 +39,18 @@ public class BitmapCache {
     private static LruCache<BitmapSource, Bitmap> sLruCache;
     private static LinkedBlockingDeque<BitmapRequest> sDeque;
     private static BitmapLoader[] sLoaders;
+
+    private static void log(String message, Throwable throwable) {
+        if (LOG_ENABLED) {
+            Log.d(LOG_TAG, message, throwable);
+        }
+    }
+
+    private static void log(String message) {
+        if (LOG_ENABLED) {
+            Log.d(LOG_TAG, message);
+        }
+    }
 
     private static class BitmapLoader extends Thread {
 
@@ -180,13 +193,12 @@ public class BitmapCache {
                     }
                     sLruCache.put(source, bitmap);
                     mWorkingRequest.updateProgress(BitmapRequest.GET_BITMAP);
-                    Log.v(LOG_TAG, "BitmapRequest with source " + source.id + " get succeed.");
+                    log("BitmapRequest with source " + source.id + " get succeed.");
                 } catch (Exception e) {
                     if (mWorkingRequest != null) {
                         BitmapSource source = mWorkingRequest.getSource();
                         mWorkingRequest.updateProgress(BitmapRequest.GET_ERROR);
-                        Log.e(LOG_TAG, "BitmapRequest with source " + source.id + " get failed.");
-                        Log.e(LOG_TAG, Log.getStackTraceString(e));
+                        log("BitmapRequest with source " + source.id + " get failed.", e);
                     }
                 } finally {
                     if (mWorkingRequest != null) {
@@ -215,6 +227,10 @@ public class BitmapCache {
         if (mInitialized) {
             throw new RuntimeException("Already initialized.");
         }
+    }
+
+    public static void setLogEnabled(boolean logEnabled) {
+        LOG_ENABLED = logEnabled;
     }
 
     public static void setContext(Context context) {
@@ -252,7 +268,7 @@ public class BitmapCache {
             if (downloadDirectory.mkdirs()) {
                 DOWNLOAD_DIRECTORY = downloadDirectory;
             } else {
-                Log.w(LOG_TAG, "Failed to create download directory, downloader won't work.");
+                log("Failed to create download directory, downloader won't work.");
             }
         }
     }
@@ -266,31 +282,31 @@ public class BitmapCache {
     public static void initialize() {
         throwIfAlreadyInitialized();
         if (CONTEXT == null) {
-            Log.w(LOG_TAG, "Context is empty");
+            log("Context is empty");
             throw new RuntimeException("Context must be set.");
         }
         if (LOADER_COUNT <= 0 || LOADER_COUNT > 3) {
-            Log.w(LOG_TAG, "LoaderCount is invalid, use 2 for default.");
+            log("LoaderCount is invalid, use 2 for default.");
             LOADER_COUNT = 2;
         }
         if (LOADER_THREAD_PRIORITY < Thread.MIN_PRIORITY || LOADER_THREAD_PRIORITY > Thread.MAX_PRIORITY) {
-            Log.w(LOG_TAG, "LoaderThreadPriority is invalid, use Thread.NORM_PRIORITY for default.");
+            log("LoaderThreadPriority is invalid, use Thread.NORM_PRIORITY for default.");
             LOADER_THREAD_PRIORITY = Thread.NORM_PRIORITY;
         }
         if (MAX_RAM_USAGE_OF_SINGLE_BITMAP <= 0 || MAX_RAM_USAGE_OF_SINGLE_BITMAP > 8 * 1024 * 1024) {
-            Log.w(LOG_TAG, "MaxRAMUsageOfSingleBitmap is invalid, use 4MB for default.");
+            log("MaxRAMUsageOfSingleBitmap is invalid, use 4MB for default.");
             MAX_RAM_USAGE_OF_SINGLE_BITMAP = 4 * 1024 * 1024;
         }
         if (MAX_RAM_USAGE_OF_ALL_BITMAPS <= 0) {
-            Log.w(LOG_TAG, "MaxRamUsageOfAllBitmaps is invalid, use 1/3 of HeapGrowthLimit for default.");
+            log("MaxRamUsageOfAllBitmaps is invalid, use 1/3 of HeapGrowthLimit for default.");
             MAX_RAM_USAGE_OF_ALL_BITMAPS = DeviceHelper.getHeapGrowthLimit(CONTEXT) / 5;
         }
         if (DOWNLOADER_CLASS == null) {
-            Log.w(LOG_TAG, "DownloaderClass is not set, use HttpFileDownloader for default.");
+            log("DownloaderClass is not set, use HttpFileDownloader for default.");
             DOWNLOADER_CLASS = HttpFileDownloader.class;
         }
         if (DOWNLOAD_DIRECTORY == null) {
-            Log.w(LOG_TAG, "DownloadDirectory not set or set failed, use cacheDir/BitmapCache for default.");
+            log("DownloadDirectory not set or set failed, use cacheDir/BitmapCache for default.");
             setDownloadDirectory("BitmapCache");
         }
         sLruCache = new LruCache<BitmapSource, Bitmap>(MAX_RAM_USAGE_OF_ALL_BITMAPS) {
