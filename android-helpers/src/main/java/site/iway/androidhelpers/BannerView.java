@@ -112,6 +112,7 @@ public class BannerView extends ViewGroup {
     private BitmapSource[] mBitmapSources;
 
     public void setBitmapSources(BitmapSource... bitmapSources) {
+        cancelTouchEventIfNeeded();
         mBitmapSources = bitmapSources;
         setScrollX(0);
         requestLayout();
@@ -339,13 +340,32 @@ public class BannerView extends ViewGroup {
         scrollToIndex(index);
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        handleSuperTouchEvent(event);
-        if (isScrollable()) {
-            int action = event.getAction();
-            switch (action) {
-                case MotionEvent.ACTION_DOWN:
+    private boolean mWillHandleTouchEvent;
+
+    private void cancelTouchEventIfNeeded() {
+        if (mWillHandleTouchEvent) {
+            if (mTimer != null) {
+                mTimer.start(false);
+            }
+
+            mVelocityTracker.recycle();
+
+            for (ViewGroup viewGroup : mRequestDisallowInterceptTouchEventViewGroups) {
+                viewGroup.requestDisallowInterceptTouchEvent(false);
+            }
+
+            mWillHandleTouchEvent = false;
+        }
+    }
+
+    private void handleTouchEvent(MotionEvent event) {
+
+        int action = event.getAction();
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+                if (isScrollable()) {
+                    mWillHandleTouchEvent = true;
+
                     for (ViewGroup viewGroup : mRequestDisallowInterceptTouchEventViewGroups) {
                         viewGroup.requestDisallowInterceptTouchEvent(true);
                     }
@@ -365,8 +385,10 @@ public class BannerView extends ViewGroup {
                     if (mTimer != null) {
                         mTimer.stop();
                     }
-                    break;
-                case MotionEvent.ACTION_MOVE:
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (mWillHandleTouchEvent) {
                     mTouchMoveX = event.getX();
                     mTouchMoveY = event.getY();
 
@@ -375,9 +397,11 @@ public class BannerView extends ViewGroup {
                     mTouchDownXOffset = event.getX() - mTouchDownX;
 
                     doScroll(event);
-                    break;
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_CANCEL:
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                if (mWillHandleTouchEvent) {
                     mVelocityTracker.addMovement(event);
 
                     adjustScroll(event);
@@ -391,9 +415,17 @@ public class BannerView extends ViewGroup {
                     for (ViewGroup viewGroup : mRequestDisallowInterceptTouchEventViewGroups) {
                         viewGroup.requestDisallowInterceptTouchEvent(false);
                     }
-                    break;
-            }
+
+                    mWillHandleTouchEvent = false;
+                }
+                break;
         }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        handleSuperTouchEvent(event);
+        handleTouchEvent(event);
         return true;
     }
 
