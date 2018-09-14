@@ -193,7 +193,7 @@ public class ImageViewer extends View {
         return mMinImageScale;
     }
 
-    public void setMinImageScaleMin(float value) {
+    public void setMinImageScale(float value) {
         mMinImageScale = value;
     }
 

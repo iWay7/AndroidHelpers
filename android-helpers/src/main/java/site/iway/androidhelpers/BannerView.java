@@ -359,7 +359,6 @@ public class BannerView extends ViewGroup {
     }
 
     private void handleTouchEvent(MotionEvent event) {
-
         int action = event.getAction();
         switch (action) {
             case MotionEvent.ACTION_DOWN:

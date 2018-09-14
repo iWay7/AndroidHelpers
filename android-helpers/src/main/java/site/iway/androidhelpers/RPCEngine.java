@@ -83,6 +83,7 @@ public class RPCEngine {
         private void runReq(RPCReq req) {
             try {
                 req.beginTime = System.currentTimeMillis();
+
                 if (req.isCanceled)
                     return;
                 req.onPrepare();
@@ -90,6 +91,7 @@ public class RPCEngine {
                 do {
                     boolean isRetry = req.willRetry;
                     req.willRetry = false;
+
                     if (req.isCanceled)
                         return;
                     HttpURLConnection connection = req.onCreateConnection(isRetry);
@@ -116,6 +118,7 @@ public class RPCEngine {
                 if (req.isCanceled)
                     return;
                 req.onFinish();
+
                 if (req.isCanceled)
                     return;
                 finishOnUIThread(req);
@@ -124,6 +127,7 @@ public class RPCEngine {
                     if (req.isCanceled)
                         return;
                     req.onError(e);
+
                     if (req.isCanceled)
                         return;
                     errorOnUIThread(req);
