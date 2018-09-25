@@ -12,7 +12,7 @@ public class RPCEngine {
     private RPCReqProcessor[] mProcessors;
     private Handler mHandler;
 
-    private RPCEngine(int processorCount) {
+    public RPCEngine(int processorCount) {
         if (processorCount <= 0) {
             throw new RuntimeException("ProcessorCount must be larger than zero.");
         }
