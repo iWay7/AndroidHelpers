@@ -118,7 +118,7 @@ public class FLog {
     }
 
     public static void v(String tag, String msg) {
-        if (sLogLevel > VERBOSE) {
+        if (VERBOSE >= sLogLevel) {
             logFile("V", tag, msg);
             Log.v(tag, msg);
         }
@@ -137,7 +137,7 @@ public class FLog {
     }
 
     public static void d(String tag, String msg) {
-        if (sLogLevel > DEBUG) {
+        if (DEBUG >= sLogLevel) {
             logFile("D", tag, msg);
             Log.d(tag, msg);
         }
@@ -156,7 +156,7 @@ public class FLog {
     }
 
     public static void i(String tag, String msg) {
-        if (sLogLevel > INFO) {
+        if (INFO >= sLogLevel) {
             logFile("I", tag, msg);
             Log.i(tag, msg);
         }
@@ -175,7 +175,7 @@ public class FLog {
     }
 
     public static void w(String tag, String msg) {
-        if (sLogLevel > WARN) {
+        if (WARN >= sLogLevel) {
             logFile("W", tag, msg);
             Log.w(tag, msg);
         }
@@ -194,7 +194,7 @@ public class FLog {
     }
 
     public static void e(String tag, String msg) {
-        if (sLogLevel > ERROR) {
+        if (ERROR >= sLogLevel) {
             logFile("E", tag, msg);
             Log.e(tag, msg);
         }
