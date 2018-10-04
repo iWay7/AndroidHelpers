@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import site.iway.javahelpers.FileSystemHelper;
 import site.iway.javahelpers.HttpFileDownloader;
 import site.iway.javahelpers.StringHelper;
 
@@ -262,14 +263,10 @@ public class BitmapCache {
 
     public static void setDownloadDirectory(File downloadDirectory) {
         throwIfAlreadyInitialized();
-        if (downloadDirectory.isDirectory() && downloadDirectory.exists()) {
+        if (FileSystemHelper.createDirectory(downloadDirectory)) {
             DOWNLOAD_DIRECTORY = downloadDirectory;
         } else {
-            if (downloadDirectory.mkdirs()) {
-                DOWNLOAD_DIRECTORY = downloadDirectory;
-            } else {
-                log("Failed to create download directory, downloader won't work.");
-            }
+            log("Failed to create download directory, downloader won't work.");
         }
     }
 

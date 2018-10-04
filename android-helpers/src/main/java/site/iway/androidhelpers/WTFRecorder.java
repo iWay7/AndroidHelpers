@@ -10,6 +10,7 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Calendar;
 
 import site.iway.javahelpers.CalendarHelper;
+import site.iway.javahelpers.FileSystemHelper;
 
 public class WTFRecorder {
 
@@ -28,13 +29,14 @@ public class WTFRecorder {
 
             File rootFilesDir = sContext.getFilesDir();
             File logFilesDir = new File(rootFilesDir, sDirectory);
-            if (!logFilesDir.exists() && !logFilesDir.mkdirs()) {
+
+            if (!FileSystemHelper.createDirectory(logFilesDir)) {
                 Log.e(LOG_TAG, "Record failed : Can not create directory " + sDirectory);
-                return;
             }
 
+
             Calendar now = CalendarHelper.now();
-            String timeString = CalendarHelper.format(now, "yyyyMMddHHmmss");
+            String timeString = CalendarHelper.format(now, "yyyyMMddHHmmssSSS");
             String fileName = timeString + ".log";
             File file = new File(logFilesDir, fileName);
 
