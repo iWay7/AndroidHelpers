@@ -34,7 +34,6 @@ public class WTFRecorder {
                 Log.e(LOG_TAG, "Record failed : Can not create directory " + sDirectory);
             }
 
-
             Calendar now = CalendarHelper.now();
             String timeString = CalendarHelper.format(now, "yyyyMMddHHmmssSSS");
             String fileName = timeString + ".log";
