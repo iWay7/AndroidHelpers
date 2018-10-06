@@ -15,9 +15,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import site.iway.javahelpers.FileSystemHelper;
@@ -54,8 +51,6 @@ public class BitmapCache {
     }
 
     private static class BitmapLoader extends Thread {
-
-        private static final Map<String, CountDownLatch> DOWNLOADING_URLS = new HashMap<>();
 
         private BitmapRequest mWorkingRequest;
         private Rect mDecodeRect;
@@ -149,33 +144,15 @@ public class BitmapCache {
                         String cacheFileName = StringHelper.md5(url);
                         File cacheFile = new File(DOWNLOAD_DIRECTORY, cacheFileName);
                         String cacheFilePath = cacheFile.getAbsolutePath();
-                        CountDownLatch countDownLatch = null;
-                        HttpFileDownloader httpFileDownloader = null;
-                        synchronized (DOWNLOADING_URLS) {
-                            if (DOWNLOADING_URLS.containsKey(url)) {
-                                countDownLatch = DOWNLOADING_URLS.get(url);
-                            } else {
-                                if (!cacheFile.exists()) {
-                                    DOWNLOADING_URLS.put(url, new CountDownLatch(1));
-                                    Constructor<? extends HttpFileDownloader> constructor =
-                                            DOWNLOADER_CLASS.getConstructor(String.class, String.class);
-                                    httpFileDownloader = constructor.newInstance(url, cacheFilePath);
-                                }
-                            }
-                        }
-                        if (countDownLatch != null) {
-                            countDownLatch.await();
-                        }
-                        if (httpFileDownloader != null) {
-                            httpFileDownloader.start();
-                            httpFileDownloader.join();
-                            synchronized (DOWNLOADING_URLS) {
-                                DOWNLOADING_URLS.get(url).countDown();
-                                DOWNLOADING_URLS.remove(url);
-                            }
-                        }
                         if (!cacheFile.exists()) {
-                            throw new IOException("Download failed.");
+                            Constructor<? extends HttpFileDownloader> constructor =
+                                    DOWNLOADER_CLASS.getConstructor(String.class, String.class);
+                            HttpFileDownloader httpFileDownloader =
+                                    constructor.newInstance(url, cacheFilePath);
+                            httpFileDownloader.run();
+                            if (!cacheFile.exists()) {
+                                throw new IOException("Download failed.");
+                            }
                         }
                     }
                     mWorkingRequest.updateProgress(BitmapRequest.PREPARING);
@@ -203,16 +180,6 @@ public class BitmapCache {
                     }
                 } finally {
                     if (mWorkingRequest != null) {
-                        BitmapSource source = mWorkingRequest.getSource();
-                        if (source.type == BitmapSource.TYPE_URL) {
-                            String url = source.content;
-                            synchronized (DOWNLOADING_URLS) {
-                                if (DOWNLOADING_URLS.containsKey(url)) {
-                                    DOWNLOADING_URLS.get(url).countDown();
-                                    DOWNLOADING_URLS.remove(url);
-                                }
-                            }
-                        }
                         mWorkingRequest = null;
                         mDecodeRect = null;
                         mDecodeOptions = null;
