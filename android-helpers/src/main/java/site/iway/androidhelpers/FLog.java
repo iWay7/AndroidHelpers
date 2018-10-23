@@ -10,15 +10,16 @@ import java.util.Calendar;
 import java.util.List;
 
 import site.iway.javahelpers.CalendarHelper;
+import site.iway.javahelpers.FileSystemHelper;
 import site.iway.javahelpers.StringHelper;
 
 public class FLog {
 
-    public static final int VERBOSE = 2;
-    public static final int DEBUG = 3;
-    public static final int INFO = 4;
-    public static final int WARN = 5;
-    public static final int ERROR = 6;
+    public static final int VERBOSE = Log.VERBOSE;
+    public static final int DEBUG = Log.DEBUG;
+    public static final int INFO = Log.INFO;
+    public static final int WARN = Log.WARN;
+    public static final int ERROR = Log.ERROR;
     public static final int NONE = 8;
 
     private static File sLogDirectory;
@@ -32,19 +33,13 @@ public class FLog {
 
     public static void initialize(String logDirectory, int logLevel, String defaultTag) {
         sLogDirectory = new File(logDirectory);
-        if (sLogDirectory.exists()) {
-            if (!sLogDirectory.isDirectory()) {
-                throw new RuntimeException("The log directory is not a directory.");
-            }
-        } else {
-            if (!sLogDirectory.mkdirs()) {
-                throw new RuntimeException("Create log directory failed.");
-            }
+        if (!FileSystemHelper.createDirectory(sLogDirectory)) {
+            throw new RuntimeException("Create log directory failed.");
         }
         sLogLevel = logLevel;
         sDefaultTag = defaultTag;
         if (StringHelper.nullOrEmpty(sDefaultTag)) {
-            sDefaultTag = "FLog";
+            sDefaultTag = "TF";
         }
         sCachedRecords = new ArrayList<>();
         sSynchronizer = new Object();
@@ -67,6 +62,39 @@ public class FLog {
                 sPrintStream.print(message);
                 sPrintStream.println();
                 sPrintStream.flush();
+            }
+        }
+    }
+
+    private static void log(int level, String tag, String msg, Throwable tr) {
+        if (level >= sLogLevel) {
+            if (tag == null)
+                tag = "";
+            if (msg == null)
+                msg = "";
+            if (tr != null)
+                msg += "\n" + getStackTraceString(tr);
+            switch (level) {
+                case VERBOSE:
+                    logFile("V", tag, msg);
+                    Log.v(tag, msg);
+                    break;
+                case DEBUG:
+                    logFile("D", tag, msg);
+                    Log.d(tag, msg);
+                    break;
+                case INFO:
+                    logFile("I", tag, msg);
+                    Log.i(tag, msg);
+                    break;
+                case WARN:
+                    logFile("W", tag, msg);
+                    Log.w(tag, msg);
+                    break;
+                case ERROR:
+                    logFile("E", tag, msg);
+                    Log.e(tag, msg);
+                    break;
             }
         }
     }
@@ -117,95 +145,80 @@ public class FLog {
         }
     }
 
-    public static void v(String tag, String msg) {
-        if (VERBOSE >= sLogLevel) {
-            logFile("V", tag, msg);
-            Log.v(tag, msg);
-        }
+    public static void v(String tag, String msg, Throwable tr) {
+        log(VERBOSE, tag, msg, tr);
     }
 
-    public static void v(String tag, String msg, Throwable tr) {
-        v(tag, msg + '\n' + getStackTraceString(tr));
+    public static void v(String tag, String msg) {
+        v(tag, msg, null);
     }
 
     public static void v(String msg) {
-        v(sDefaultTag, msg);
+        v(sDefaultTag, msg, null);
     }
 
     public static void v(String msg, Throwable tr) {
         v(sDefaultTag, msg, tr);
     }
 
-    public static void d(String tag, String msg) {
-        if (DEBUG >= sLogLevel) {
-            logFile("D", tag, msg);
-            Log.d(tag, msg);
-        }
+    public static void d(String tag, String msg, Throwable tr) {
+        log(DEBUG, tag, msg, tr);
     }
 
-    public static void d(String tag, String msg, Throwable tr) {
-        d(tag, msg + '\n' + getStackTraceString(tr));
+    public static void d(String tag, String msg) {
+        d(tag, msg, null);
     }
 
     public static void d(String msg) {
-        d(sDefaultTag, msg);
+        d(sDefaultTag, msg, null);
     }
 
     public static void d(String msg, Throwable tr) {
         d(sDefaultTag, msg, tr);
     }
 
-    public static void i(String tag, String msg) {
-        if (INFO >= sLogLevel) {
-            logFile("I", tag, msg);
-            Log.i(tag, msg);
-        }
+    public static void i(String tag, String msg, Throwable tr) {
+        log(INFO, tag, msg, tr);
     }
 
-    public static void i(String tag, String msg, Throwable tr) {
-        i(tag, msg + '\n' + getStackTraceString(tr));
+    public static void i(String tag, String msg) {
+        i(tag, msg, null);
     }
 
     public static void i(String msg) {
-        i(sDefaultTag, msg);
+        i(sDefaultTag, msg, null);
     }
 
     public static void i(String msg, Throwable tr) {
         i(sDefaultTag, msg, tr);
     }
 
-    public static void w(String tag, String msg) {
-        if (WARN >= sLogLevel) {
-            logFile("W", tag, msg);
-            Log.w(tag, msg);
-        }
+    public static void w(String tag, String msg, Throwable tr) {
+        log(WARN, tag, msg, tr);
     }
 
-    public static void w(String tag, String msg, Throwable tr) {
-        w(tag, msg + '\n' + getStackTraceString(tr));
+    public static void w(String tag, String msg) {
+        w(tag, msg, null);
     }
 
     public static void w(String msg) {
-        w(sDefaultTag, msg);
+        w(sDefaultTag, msg, null);
     }
 
     public static void w(String msg, Throwable tr) {
         w(sDefaultTag, msg, tr);
     }
 
-    public static void e(String tag, String msg) {
-        if (ERROR >= sLogLevel) {
-            logFile("E", tag, msg);
-            Log.e(tag, msg);
-        }
+    public static void e(String tag, String msg, Throwable tr) {
+        log(ERROR, tag, msg, tr);
     }
 
-    public static void e(String tag, String msg, Throwable tr) {
-        e(tag, msg + '\n' + getStackTraceString(tr));
+    public static void e(String tag, String msg) {
+        e(tag, msg, null);
     }
 
     public static void e(String msg) {
-        e(sDefaultTag, msg);
+        e(sDefaultTag, msg, null);
     }
 
     public static void e(String msg, Throwable tr) {

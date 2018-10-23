@@ -23,9 +23,14 @@ import site.iway.javahelpers.StringHelper;
 
 public class BitmapCache {
 
+    public interface Logger {
+        void d(String tag, String msg, Throwable tr);
+    }
+
     private static final String LOG_TAG = "BitmapCache";
 
     private static boolean LOG_ENABLED;
+    private static Logger LOGGER;
     private static Context CONTEXT;
     private static int LOADER_COUNT;
     private static int LOADER_THREAD_PRIORITY;
@@ -38,16 +43,22 @@ public class BitmapCache {
     private static LinkedBlockingDeque<BitmapRequest> sDeque;
     private static BitmapLoader[] sLoaders;
 
-    private static void log(String message, Throwable throwable) {
+    private static void log(String msg, Throwable tr) {
         if (LOG_ENABLED) {
-            Log.d(LOG_TAG, message, throwable);
+            if (LOGGER == null) {
+                if (tr == null) {
+                    Log.d(LOG_TAG, msg);
+                } else {
+                    Log.d(LOG_TAG, msg, tr);
+                }
+            } else {
+                LOGGER.d(LOG_TAG, msg, tr);
+            }
         }
     }
 
-    private static void log(String message) {
-        if (LOG_ENABLED) {
-            Log.d(LOG_TAG, message);
-        }
+    private static void log(String msg) {
+        log(msg, null);
     }
 
     private static class BitmapLoader extends Thread {
@@ -154,6 +165,11 @@ public class BitmapCache {
                                 throw new IOException("Download failed.");
                             }
                         }
+                        if (!cacheFile.setLastModified(System.currentTimeMillis())) {
+                            String message = "TFBitmapRequest with source " + source.id +
+                                    " cache file change last modified failed.";
+                            log(message);
+                        }
                     }
                     mWorkingRequest.updateProgress(BitmapRequest.PREPARING);
                     prepareDecode(source);
@@ -199,6 +215,10 @@ public class BitmapCache {
 
     public static void setLogEnabled(boolean logEnabled) {
         LOG_ENABLED = logEnabled;
+    }
+
+    public static void setLogger(Logger logger) {
+        LOGGER = logger;
     }
 
     public static void setContext(Context context) {

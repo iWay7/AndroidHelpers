@@ -12,6 +12,7 @@ import java.util.Calendar;
 import site.iway.javahelpers.CalendarHelper;
 import site.iway.javahelpers.FileSystemHelper;
 
+@Deprecated
 public class WTFRecorder {
 
     private static final String LOG_TAG = "WTFRecorder";

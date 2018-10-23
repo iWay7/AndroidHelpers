@@ -12,15 +12,15 @@ public abstract class RPCReq {
     volatile long beginTime;
     volatile boolean willRetry;
 
-    public final void start() {
+    public void start() {
         RPCEngine.dealWith(this);
     }
 
-    public final void retry() {
+    public void retry() {
         willRetry = true;
     }
 
-    public final void cancel() {
+    public void cancel() {
         isCanceled = true;
     }
 
