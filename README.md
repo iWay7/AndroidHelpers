@@ -17,7 +17,7 @@ allprojects {
 ```
 dependencies {
     ...
-    api 'com.github.iWay7:AndroidHelpers:1.0.24'
+    api 'com.github.iWay7:AndroidHelpers:1.0.25'
     api 'com.github.iWay7:JavaHelpers:1.0.28'
     api 'com.android.support:support-v4:28.0.0'
     api 'com.google.zxing:core:3.2.1'
