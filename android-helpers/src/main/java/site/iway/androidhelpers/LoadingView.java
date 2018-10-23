@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
@@ -55,9 +54,15 @@ public class LoadingView extends View {
                     invalidate();
                 }
             }
+
+            @Override
+            public void start(boolean startOnce) {
+                mRotateDegrees = 0;
+                super.start(startOnce);
+            }
         };
         if (mHasWindow) {
-            mTimer.start(true);
+            mTimer.start(false);
         }
     }
 
@@ -70,8 +75,8 @@ public class LoadingView extends View {
             mDrawable = r.getDrawable(R.drawable.loading);
         mRotateFrameSpan = a.getInt(R.styleable.LoadingView_rotateFrameSpan, 30);
         mRotateFrameTime = a.getInt(R.styleable.LoadingView_rotateFrameTime, 100);
-        update();
         a.recycle();
+        update();
     }
 
     public Drawable getDrawable() {
@@ -102,8 +107,6 @@ public class LoadingView extends View {
         update();
     }
 
-    private Rect mDrawRect = new Rect();
-
     protected void onDraw(Canvas canvas) {
         if (mDrawable != null) {
             canvas.save();
@@ -113,9 +116,12 @@ public class LoadingView extends View {
             int clientRight = getWidth() - getPaddingRight();
             int clientBottom = getHeight() - getPaddingBottom();
 
-            mDrawRect.set(clientLeft, clientTop, clientRight, clientBottom);
-            canvas.rotate(mRotateDegrees, mDrawRect.centerX(), mDrawRect.centerY());
-            mDrawable.setBounds(0, 0, getWidth(), getHeight());
+            float centerX = (clientLeft + clientRight) * 0.5f;
+            float centerY = (clientLeft + clientRight) * 0.5f;
+
+            canvas.rotate(mRotateDegrees, centerX, centerY);
+
+            mDrawable.setBounds(clientLeft, clientTop, clientRight, clientBottom);
             mDrawable.draw(canvas);
 
             canvas.restore();
