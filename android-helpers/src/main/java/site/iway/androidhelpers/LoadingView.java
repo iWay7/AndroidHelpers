@@ -117,7 +117,7 @@ public class LoadingView extends View {
             int clientBottom = getHeight() - getPaddingBottom();
 
             float centerX = (clientLeft + clientRight) * 0.5f;
-            float centerY = (clientLeft + clientRight) * 0.5f;
+            float centerY = (clientTop + clientBottom) * 0.5f;
 
             canvas.rotate(mRotateDegrees, centerX, centerY);
 
